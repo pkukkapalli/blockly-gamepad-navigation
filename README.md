@@ -1,22 +1,48 @@
-<h1 align="center">
-Blockly Samples <br /> <a href="https://github.com/google/blockly"><img src="https://tinyurl.com/built-on-blockly" /> </a>
-</h1>
+# blockly-gamepad-navigation [![Built on Blockly](https://tinyurl.com/built-on-blockly)](https://github.com/google/blockly)
 
-Plugins, codelabs, and examples related to the [Blockly](https://github.com/google/blockly) library.
+A [Blockly](https://www.npmjs.com/package/blockly) plugin that adds gamepad 
+navigation to Blockly. This allows users to use the gamepad to navigate the
+toolbox and the blocks.
 
-This repository has three sections:
+This is a fork of the official Blockly [keyboard-navigation](https://developers.google.com/blockly/guides/configure/web/keyboard-nav)
+plugin.
 
-- [Plugins](plugins/): self-contained pieces of code that add functionality to Blockly.
-- [Examples](examples/): self-contained sample projects demonstrating techniques to include and extend the Blockly library.
-- [Codelabs](codelabs/): interactive tutorials demonstrating how to use Blockly.
+## Installation
 
-Please see our [GitHub Pages site](https://google.github.io/blockly-samples/index.html) for interactive demos of most plugins.
+### Yarn
+```
+yarn add blockly-gamepad-navigation
+```
 
-## Support
+### npm
+```
+npm install blockly-gamepad-navigation --save
+```
 
-Blockly has an active [developer forum](https://groups.google.com/forum/#!forum/blockly). Please drop by and say hello. Show us your prototypes early; collectively we have a lot of experience and can offer hints which will save you time. We actively monitor the forums and typically respond to questions within 2 working days.
+## Usage
+```js
+import * as Blockly from 'blockly';
+import {NavigationController} from 'blockly-gamepad-navigation';
+// Inject Blockly.
+const workspace = Blockly.inject('blocklyDiv', {
+  toolbox: toolboxCategories,
+});
+// Initialize plugin.
+const navigationController = new NavigationController();
+navigationController.init();
+navigationController.addWorkspace(workspace);
+// Turns on keyboard navigation.
+navigationController.enable(workspace);
+```
 
+## API
+This plugin exports the following classes:
+- `NavigationController`: Class in charge of registering all gamepad shortcuts.
+- `Navigation`: This holds all the functions necessary to navigate around Blockly using the gamepad.
+- `FlyoutCursor`: Cursor in charge of navigating the flyout.
+- `LineCursor`: Alternative cursor that tries to navigate blocks like lines of code.
+
+You should only need to use these if you plan on changing the default functionality.
 
 ## License
-
 Apache 2.0

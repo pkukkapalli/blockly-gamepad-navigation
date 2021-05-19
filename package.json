@@ -1,49 +1,65 @@
 {
-    "name": "blockly-samples",
-    "version": "0.0.0",
-    "description": "Samples for using Blockly",
-    "author": "Blockly Team",
-    "license": "Apache-2.0",
-    "scripts": {
-        "audit:fix": "lerna run audit:fix && lerna bootstrap",
-        "boot": "lerna bootstrap",
-        "build": "lerna run build",
-        "clean": "lerna run clean",
-        "clean:node": "find . -name \"node_modules\" -type d -prune -exec rm -rf '{}' +",
-        "deploy:prepare": "npm run deploy:prepare:plugins && npm run deploy:prepare:examples && gulp predeploy",
-        "deploy:prepare:examples": "cd examples && npm run predeploy",
-        "deploy:prepare:plugins": "npm run clean && lerna run predeploy",
-        "deploy": "npm run deploy:prepare && gulp deploy",
-        "deploy:upstream": "npm run deploy:prepare && gulp deployUpstream",
-        "license": "gulp checkLicenses",
-        "lint": "lerna run lint",
-        "lint:fix": "lerna run lint -- -- --fix",
-        "postinstall": "npm run boot",
-        "test": "lerna run test",
-        "publish": "gulp publish",
-        "publish:check": "lerna changed",
-        "publish:dryrun": "gulp publishDryRun",
-        "publish:force": "gulp forcePublish",
-        "publish:_internal": "lerna publish",
-        "test:ghpages": "gulp testGhPagesLocally"
-    },
-    "devDependencies": {
-        "@blockly/eslint-config": "^2.0.0",
-        "eslint": "^7.15.0",
-        "gh-pages": "^3.1.0",
-        "gulp": "^4.0.2",
-        "gulp-header": "^2.0.9",
-        "js-green-licenses": "^1.1.0",
-        "json-to-pretty-yaml": "^1.2.2",
-        "lerna": "^3.20.2",
-        "rimraf": "^3.0.2",
-        "typescript": "^3.8.3"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://wombat-dressing-room.appspot.com"
-    },
-    "eslintConfig": {
-        "extends": "@blockly/eslint-config"
-    }
+  "name": "blockly-gamepad-navigation",
+  "version": "0.1.0",
+  "description": "A Blockly plugin that adds gamepad navigation support.",
+  "scripts": {
+    "audit:fix": "blockly-scripts auditFix",
+    "build": "blockly-scripts build",
+    "clean": "blockly-scripts clean",
+    "lint": "blockly-scripts lint",
+    "predeploy": "blockly-scripts predeploy",
+    "prepublishOnly": "npm run clean && npm run build",
+    "start": "blockly-scripts start",
+    "test": "blockly-scripts test"
+  },
+  "main": "./dist/index.js",
+  "module": "./src/index.js",
+  "unpkg": "./dist/index.js",
+  "author": "Pradyoth Kukkapalli (pkukkapalli@gmail.com)",
+  "keywords": [
+    "blockly",
+    "blockly-plugin",
+    "gamepad-navigation"
+  ],
+  "homepage": "https://github.com/pkukkapalli/blockly-gamepad-navigation/blob/master/README.md",
+  "bugs": {
+    "url": "https://github.com/pkukkapalli/blockly-gamepad-navigation/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pkukkapalli/blockly-gamepad-navigation.git"
+  },
+  "license": "Apache-2.0",
+  "directories": {
+    "dist": "dist",
+    "src": "src"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "devDependencies": {
+    "@blockly/dev-scripts": "^1.2.6",
+    "@blockly/dev-tools": "^2.3.0",
+    "blockly": "^5.20210325.0",
+    "chai": "^4.2.0",
+    "jsdom": "^16.4.0",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^7.1.0",
+    "sinon": "^9.0.1"
+  },
+  "peerDependencies": {
+    "blockly": ">=5.20210325.0"
+  },
+  "eslintConfig": {
+    "extends": "@blockly/eslint-config"
+  },
+  "engines": {
+    "node": ">=8.17.0"
+  },
+  "browserslist": [
+    "defaults",
+    "IE 11",
+    "IE_Mob 11"
+  ]
 }
