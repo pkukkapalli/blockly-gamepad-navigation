@@ -1,4 +1,4 @@
-# blockly-gamepad-navigation [![Built on Blockly](https://tinyurl.com/built-on-blockly)](https://github.com/google/blockly)
+# [WORK IN PROGRESS] blockly-gamepad-navigation [![Built on Blockly](https://tinyurl.com/built-on-blockly)](https://github.com/google/blockly)
 
 A [Blockly](https://www.npmjs.com/package/blockly) plugin that adds gamepad 
 navigation to Blockly. This allows users to use the gamepad to navigate the
