@@ -10,7 +10,8 @@
     "predeploy": "blockly-scripts predeploy",
     "prepublishOnly": "npm run clean && npm run build",
     "start": "blockly-scripts start",
-    "test": "blockly-scripts test"
+    "test": "blockly-scripts test",
+    "prepare": "husky install"
   },
   "main": "./dist/index.js",
   "module": "./src/index.js",
@@ -43,6 +44,7 @@
     "@blockly/dev-tools": "^2.3.0",
     "blockly": "^5.20210325.0",
     "chai": "^4.2.0",
+    "husky": "^6.0.0",
     "jsdom": "^16.4.0",
     "jsdom-global": "^3.0.2",
     "mocha": "^7.1.0",
