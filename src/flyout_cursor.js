@@ -6,7 +6,6 @@
 
 /**
  * @fileoverview The class representing a cursor used to navigate the flyout.
- * @author aschmiedt@google.com (Abby Schmiedt)
  */
 
 import * as Blockly from 'blockly/core';

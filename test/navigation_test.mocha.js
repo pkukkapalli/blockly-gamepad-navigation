@@ -1124,9 +1124,9 @@ suite('Navigation', function() {
       const marker = this.workspace.getMarkerManager().markers_[markerName];
       chai.assert.isUndefined(marker);
     });
-    test('Keyboard accessibility mode can not be enabled', function() {
+    test('Gampead accessibility mode can not be enabled', function() {
       this.navigation.removeWorkspace(this.workspace);
-      this.navigation.enableKeyboardAccessibility(this.workspace);
+      this.navigation.enableGamepadAccessibility(this.workspace);
       chai.assert.isFalse(this.workspace.keyboardAccessibilityMode);
     });
     test('Dispose', function() {

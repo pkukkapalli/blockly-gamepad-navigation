@@ -10,7 +10,6 @@
  * they were lines of code in a text editor. Previous and next traverse previous
  * connections, next connections and blocks, while in and out traverse input
  * connections and fields.
- * @author aschmiedt@google.com (Abby Schmiedt)
  */
 
 import * as Blockly from 'blockly/core';

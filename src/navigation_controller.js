@@ -5,9 +5,8 @@
  */
 
 /**
- * @fileoverview Registers all of the keyboard shortcuts that are necessary for
- * navigating blockly using the keyboard.
- * @author aschmiedt@google.com (Abby Schmiedt)
+ * @fileoverview Registers all of the gamepad shortcuts that are necessary for
+ * navigating blockly using the gamepad.
  */
 
 import './gesture_monkey_patch';
@@ -18,19 +17,19 @@ import * as Constants from './constants';
 import {Navigation} from './navigation';
 
 /**
- * Class for registering shortcuts for keyboard navigation.
+ * Class for registering shortcuts for gamepad navigation.
  */
 export class NavigationController {
   /**
    * Constructor used for registering shortcuts.
-   * This will register any default shortcuts for keyboard navigation.
+   * This will register any default shortcuts for gamepad navigation.
    * This is intended to be a singleton.
-   * @param {!Navigation=} optNavigation The class that handles keyboard
+   * @param {!Navigation=} optNavigation The class that handles gamepad
    *     navigation shortcuts. (Ex: inserting a block, focusing the flyout).
    */
   constructor(optNavigation) {
     /**
-     * Handles any keyboard navigation shortcuts.
+     * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
      * @public
      */
@@ -47,8 +46,8 @@ export class NavigationController {
   }
 
   /**
-   * Adds methods to core Blockly components that allows them to handle keyboard
-   * shortcuts when in keyboard navigation mode.
+   * Adds methods to core Blockly components that allows them to handle gamepad
+   * shortcuts when in gamepad navigation mode.
    * @protected
    */
   addShortcutHandlers() {
@@ -67,7 +66,7 @@ export class NavigationController {
 
   /**
    * Removes methods on core Blockly components that allows them to handle
-   * keyboard shortcuts.
+   * gamepad shortcuts.
    * @protected
    */
   removeShortcutHandlers() {
@@ -85,8 +84,8 @@ export class NavigationController {
   }
 
   /**
-   * Handles the given keyboard shortcut.
-   * This is only triggered when keyboard accessibility mode is enabled.
+   * Handles the given gamepad shortcut.
+   * This is only triggered when gamepad accessibility mode is enabled.
    * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
    *     to be handled.
    * @return {boolean} True if the field handled the shortcut,
@@ -117,8 +116,8 @@ export class NavigationController {
   }
 
   /**
-   * Handles the given keyboard shortcut.
-   * This is only triggered when keyboard accessibility mode is enabled.
+   * Handles the given gamepad shortcut.
+   * This is only triggered when gamepad accessibility mode is enabled.
    * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
    *     to be handled.
    * @return {boolean} True if the field handled the shortcut,
@@ -143,8 +142,8 @@ export class NavigationController {
   }
 
   /**
-   * Handles the given keyboard shortcut.
-   * This is only triggered when keyboard accessibility mode is enabled.
+   * Handles the given gamepad shortcut.
+   * This is only triggered when gamepad accessibility mode is enabled.
    * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
    *     to be handled.
    * @return {boolean} True if the toolbox handled the shortcut,
@@ -171,10 +170,10 @@ export class NavigationController {
   }
 
   /**
-   * Adds all necessary event listeners and markers to a workspace for keyboard
-   * navigation to work. This must be called for keyboard navigation to work
+   * Adds all necessary event listeners and markers to a workspace for gamepad
+   * navigation to work. This must be called for gamepad navigation to work
    * on a workspace.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to add keyboard
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to add gamepad
    *     navigation to.
    * @public
    */
@@ -184,8 +183,8 @@ export class NavigationController {
 
   /**
    * Removes all necessary event listeners and markers to a workspace for
-   * keyboard navigation to work.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to remove keyboard
+   * gamepad navigation to work.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to remove gamepad
    *     navigation from.
    * @public
    */
@@ -194,23 +193,23 @@ export class NavigationController {
   }
 
   /**
-   * Turns on keyboard navigation.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to turn on keyboard
+   * Turns on gamepad navigation.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to turn on gamepad
    *     navigation for.
    * @public
    */
   enable(workspace) {
-    this.navigation.enableKeyboardAccessibility(workspace);
+    this.navigation.enableGamepadAccessibility(workspace);
   }
 
   /**
-   * Turns off keyboard navigation.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to turn off keyboard
+   * Turns off gamepad navigation.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to turn off gamepad
    *     navigation on.
    * @public
    */
   disable(workspace) {
-    this.navigation.disableKeyboardAccessibility(workspace);
+    this.navigation.disableGamepadAccessibility(workspace);
   }
 
   /**
@@ -236,7 +235,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to go to the previous location when in keyboard
+   * Gampead shortcut to go to the previous location when in gamepad
    * navigation mode.
    * @protected
    */
@@ -282,33 +281,33 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to turn keyboard navigation on or off.
+   * Gamepad shortcut to turn gamepad navigation on or off.
    * @protected
    */
-  registerToggleKeyboardNav() {
+  registerToggleGamepadNav() {
     /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
-    const toggleKeyboardNavShortcut = {
-      name: Constants.SHORTCUT_NAMES.TOGGLE_KEYBOARD_NAV,
+    const toggleGamepadNavShortcut = {
+      name: Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV,
       callback: (workspace) => {
         if (workspace.keyboardAccessibilityMode) {
-          this.navigation.disableKeyboardAccessibility(workspace);
+          this.navigation.disableGamepadAccessibility(workspace);
         } else {
-          this.navigation.enableKeyboardAccessibility(workspace);
+          this.navigation.enableGamepadAccessibility(workspace);
         }
         return true;
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(toggleKeyboardNavShortcut);
+    Blockly.ShortcutRegistry.registry.register(toggleGamepadNavShortcut);
     const ctrlShiftK = Blockly.ShortcutRegistry.registry.createSerializedKey(
         Blockly.utils.KeyCodes.K,
         [Blockly.utils.KeyCodes.CTRL, Blockly.utils.KeyCodes.SHIFT]);
     Blockly.ShortcutRegistry.registry.addKeyMapping(
-        ctrlShiftK, toggleKeyboardNavShortcut.name);
+        ctrlShiftK, toggleGamepadNavShortcut.name);
   }
 
   /**
-   * Keyboard shortcut to go to the out location when in keyboard navigation
+   * Gamepad shortcut to go to the out location when in gamepad navigation
    * mode.
    * @protected
    */
@@ -349,7 +348,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to go to the next location when in keyboard navigation
+   * Gamepad shortcut to go to the next location when in gamepad navigation
    * mode.
    * @protected
    */
@@ -395,7 +394,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to go to the in location when in keyboard navigation
+   * Gamepad shortcut to go to the in location when in gamepad navigation
    * mode.
    * @protected
    */
@@ -437,7 +436,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to connect a block to a marked location when in keyboard
+   * Gamepad shortcut to connect a block to a marked location when in gamepad
    * navigation mode.
    * @protected
    */
@@ -465,7 +464,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to mark a location when in keyboard navigation mode.
+   * Gamepad shortcut to mark a location when in gamepad navigation mode.
    * @protected
    */
   registerMark() {
@@ -496,7 +495,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to disconnect two blocks when in keyboard navigation
+   * Gamepad shortcut to disconnect two blocks when in gamepad navigation
    * mode.
    * @protected
    */
@@ -525,7 +524,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to focus on the toolbox when in keyboard navigation
+   * Gamepad shortcut to focus on the toolbox when in gamepad navigation
    * mode.
    * @protected
    */
@@ -558,8 +557,8 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to exit the current location and focus on the workspace
-   * when in keyboard navigation mode.
+   * Gamepad shortcut to exit the current location and focus on the workspace
+   * when in gamepad navigation mode.
    * @protected
    */
   registerExit() {
@@ -591,8 +590,8 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to move the cursor on the workspace to the left when in
-   * keyboard navigation mode.
+   * Gamepad shortcut to move the cursor on the workspace to the left when in
+   * gamepad navigation mode.
    * @protected
    */
   registerWorkspaceMoveLeft() {
@@ -616,8 +615,8 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to move the cursor on the workspace to the right when in
-   * keyboard navigation mode.
+   * Gamepad shortcut to move the cursor on the workspace to the right when in
+   * gamepad navigation mode.
    * @protected
    */
   registerWorkspaceMoveRight() {
@@ -641,7 +640,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to move the cursor on the workspace up when in keyboard
+   * Gamepad shortcut to move the cursor on the workspace up when in gamepad
    * navigation mode.
    * @protected
    */
@@ -666,8 +665,8 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to move the cursor on the workspace down when in
-   * keyboard navigation mode.
+   * Gamepad shortcut to move the cursor on the workspace down when in
+   * gamepad navigation mode.
    * @protected
    */
   registerWorkspaceMoveDown() {
@@ -691,7 +690,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to copy the block the cursor is currently on.
+   * Gamepad shortcut to copy the block the cursor is currently on.
    * @protected
    */
   registerCopy() {
@@ -771,8 +770,7 @@ export class NavigationController {
   }
 
   /**
-   * Keyboard shortcut to copy and delete the block the cursor is on using
-   * ctrl+x, cmd+x, or alt+x.
+   * Gamepad shortcut to copy and delete the block the cursor is on.
    * @protected
    */
   registerCut() {
@@ -820,8 +818,7 @@ export class NavigationController {
   }
 
   /**
-   * Registers shortcut to delete the block the cursor is on using delete or
-   * backspace.
+   * Registers shortcut to delete the block the cursor is on.
    * @protected
    */
   registerDelete() {
@@ -863,8 +860,8 @@ export class NavigationController {
   }
 
   /**
-   * Registers all default keyboard shortcut items for keyboard navigation. This
-   * should be called once per instance of KeyboardShortcutRegistry.
+   * Registers all default gamepad shortcut items for gamepad navigation. This
+   * should be called once per instance of GamepadShortcutRegistry.
    * @protected
    */
   registerDefaults() {
@@ -878,7 +875,7 @@ export class NavigationController {
     this.registerInsert();
     this.registerMark();
     this.registerToolboxFocus();
-    this.registerToggleKeyboardNav();
+    this.registerToggleGamepadNav();
 
     this.registerWorkspaceMoveDown();
     this.registerWorkspaceMoveLeft();
@@ -892,7 +889,7 @@ export class NavigationController {
   }
 
   /**
-   * Removes all the keyboard navigation shortcuts.
+   * Removes all the gamepad navigation shortcuts.
    * @public
    */
   dispose() {

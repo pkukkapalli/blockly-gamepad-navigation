@@ -5,12 +5,11 @@
  */
 
 /**
- * @fileoverview Constants for keyboard navigation.
- * @author aschmiedt@google.com (Abby Schmiedt)
+ * @fileoverview Constants for gamepad navigation.
  */
 
 /**
- * Keyboard navigation states.
+ * Gamepad navigation states.
  * The different parts of Blockly that the user navigates between.
  * @enum {string}
  * @const
@@ -23,7 +22,7 @@ export const STATE = {
 };
 
 /**
- * Default keyboard navigation shortcut names.
+ * Default gamepad navigation shortcut names.
  * @enum {string}
  * @const
  * @public
@@ -38,11 +37,11 @@ export const SHORTCUT_NAMES = {
   DISCONNECT: 'disconnect',
   TOOLBOX: 'toolbox',
   EXIT: 'exit',
-  TOGGLE_KEYBOARD_NAV: 'toggle_keyboard_nav',
-  COPY: 'keyboard_nav_copy',
-  CUT: 'keyboard_nav_cut',
-  PASTE: 'keyboard_nav_paste',
-  DELETE: 'keyboard_nav_delete',
+  TOGGLE_GAMEPAD_NAV: 'toggle_gamepad_nav',
+  COPY: 'gamepad_nav_copy',
+  CUT: 'gamepad_nav_cut',
+  PASTE: 'gamepad_nav_paste',
+  DELETE: 'gamepad_nav_delete',
   MOVE_WS_CURSOR_UP: 'workspace_up',
   MOVE_WS_CURSOR_DOWN: 'workspace_down',
   MOVE_WS_CURSOR_LEFT: 'workspace_left',

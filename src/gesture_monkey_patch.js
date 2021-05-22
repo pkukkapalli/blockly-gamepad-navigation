@@ -7,9 +7,10 @@
 /**
  * @fileoverview Overrides methods on Blockly.Gesture in order to allow users
  * to move the cursor to blocks or the workspace using shift click.
+ * TODO(pkukkapalli): This is probably not necessary for gamepad navigation, and
+ * can be deprecated.
  * TODO(google/blockly#4584): We do not have a way to do this currently without
  * monkey patching Blockly.
- * @author aschmiedt@google.com (Abby Schmiedt)
  */
 
 import * as Blockly from 'blockly/core';

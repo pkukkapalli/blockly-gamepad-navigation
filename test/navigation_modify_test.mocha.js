@@ -108,7 +108,7 @@ suite('Insert/Modify', function() {
     this.row_block_2 = this.workspace.getBlockById('row_block_2');
     this.statement_block_1 = this.workspace.getBlockById('statement_block_1');
     this.statement_block_2 = this.workspace.getBlockById('statement_block_2');
-    this.navigation.enableKeyboardAccessibility(this.workspace);
+    this.navigation.enableGamepadAccessibility(this.workspace);
   });
 
   teardown(function() {

@@ -9,15 +9,15 @@ const {Navigation} = require('../src/index');
 const Blockly = require('blockly/node');
 
 /**
- * Creates a workspace for testing keyboard navigation.
+ * Creates a workspace for testing gamepad navigation.
  * @param {Navigation} navigation Object holding navigation classes.
- * @param {boolean} enableKeyboardNav True to enable keyboard navigation, false
+ * @param {boolean} enableGamepadNav True to enable gamepad navigation, false
  *     otherwise.
  * @param {boolean} readOnly True for a read only workspace, false otherwise.
  * @return {Blockly.WorkspaceSvg} The created workspace.
  */
 export function createNavigationWorkspace(
-    navigation, enableKeyboardNav, readOnly) {
+    navigation, enableGamepadNav, readOnly) {
   const workspace = Blockly.inject('blocklyDiv', {
     toolbox: `
       <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox-categories" style="display: none">
@@ -38,9 +38,9 @@ export function createNavigationWorkspace(
   `,
     readOnly: readOnly,
   });
-  if (enableKeyboardNav) {
+  if (enableGamepadNav) {
     navigation.addWorkspace(workspace);
-    navigation.enableKeyboardAccessibility(workspace);
+    navigation.enableGamepadAccessibility(workspace);
     navigation.setState(workspace, Constants.STATE.WORKSPACE);
   }
   return workspace;

@@ -6,8 +6,7 @@
 
 /**
  * @fileoverview Holds all methods necessary to use Blockly through the
- * keyboard.
- * @author aschmiedt@google.com (Abby Schmiedt)
+ * gamepad.
  */
 
 import * as Blockly from 'blockly/core';
@@ -17,11 +16,11 @@ import {
   registrationType as cursorRegistrationType} from './flyout_cursor';
 
 /**
- * Class that holds all methods necessary for keyboard navigation to work.
+ * Class that holds all methods necessary for gamepad navigation to work.
  */
 export class Navigation {
   /**
-   * Constructor for keyboard navigation.
+   * Constructor for gamepad navigation.
    */
   constructor() {
     /**
@@ -99,10 +98,10 @@ export class Navigation {
   }
 
   /**
-   * Adds all necessary change listeners and markers to a workspace for keyboard
-   * navigation to work. This must be called for keyboard navigation to work
-   * on a workspace.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to add keyboard
+   * Adds all necessary change listeners and markers to a workspace for gamepad
+   * navigation to work. This must be called for gamepad navigation to work on
+   * a workspace.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to add gamepad
    *     navigation to.
    * @public
    */
@@ -119,8 +118,8 @@ export class Navigation {
   }
 
   /**
-   * Removes all keyboard navigation change listeners and markers.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to remove keyboard
+   * Removes all gamepad navigation change listeners and markers.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to remove gamepad
    *     navigation from.
    * @public
    */
@@ -129,7 +128,7 @@ export class Navigation {
     const flyout = workspace.getFlyout();
 
     if (workspace.getCursor()) {
-      this.disableKeyboardAccessibility(workspace);
+      this.disableGamepadAccessibility(workspace);
     }
 
     if (workspaceIdx > -1) {
@@ -166,10 +165,10 @@ export class Navigation {
   }
 
   /**
-   * Gets the marker created for keyboard navigation.
+   * Gets the marker created for gamepad navigation.
    * @param {!Blockly.WorkspaceSvg} workspace The workspace to get the marker
    *     from.
-   * @return {?Blockly.Marker} The marker created for keyboard navigation.
+   * @return {?Blockly.Marker} The marker created for gamepad navigation.
    * @protected
    */
   getMarker(workspace) {
@@ -178,7 +177,7 @@ export class Navigation {
 
   /**
    * Adds all event listeners and cursors to the flyout that are needed for
-   * keyboard navigation to work.
+   * gamepad navigation to work.
    * @param {!Blockly.IFlyout} flyout The flyout to add a cursor and change
    *     listeners to.
    * @protected
@@ -193,7 +192,7 @@ export class Navigation {
 
   /**
    * Removes all change listeners from the flyout that are needed for
-   * keyboard navigation to work.
+   * gamepad navigation to work.
    * @param {!Blockly.IFlyout} flyout The flyout to add a cursor and event
    *     listeners to.
    * @protected
@@ -204,7 +203,7 @@ export class Navigation {
   }
 
   /**
-   * Updates the state of keyboard navigation and the position of the cursor
+   * Updates the state of gamepad navigation and the position of the cursor
    * based on workspace events.
    * @param {!Blockly.Events.Abstract} e The Blockly event to process.
    * @protected
@@ -238,7 +237,7 @@ export class Navigation {
   }
 
   /**
-   * Updates the state of keyboard navigation and the position of the cursor
+   * Updates the state of gamepad navigation and the position of the cursor
    * based on events emitted from the flyout's workspace.
    * @param {!Blockly.Events.Abstract} e The Blockly event to process.
    * @protected
@@ -991,11 +990,11 @@ export class Navigation {
 
   /**
    * Enables accessibility mode.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to enable keyboard
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to enable gamepad
    *     accessibility mode on.
    * @package
    */
-  enableKeyboardAccessibility(workspace) {
+  enableGamepadAccessibility(workspace) {
     if (this.workspaces.indexOf(workspace) > -1 &&
         !workspace.keyboardAccessibilityMode) {
       workspace.keyboardAccessibilityMode = true;
@@ -1005,11 +1004,11 @@ export class Navigation {
 
   /**
    * Disables accessibility mode.
-   * @param {!Blockly.WorkspaceSvg} workspace The workspace to disable keyboard
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to disable gamepad
    *     accessibility mode on.
    * @package
    */
-  disableKeyboardAccessibility(workspace) {
+  disableGamepadAccessibility(workspace) {
     if (this.workspaces.indexOf(workspace) > -1 &&
         workspace.keyboardAccessibilityMode) {
       workspace.keyboardAccessibilityMode = false;
@@ -1110,7 +1109,7 @@ export class Navigation {
   }
 
   /**
-   * Pastes the coped block to the marked location.
+   * Pastes the copied block to the marked location.
    * @return {boolean} True if the paste was sucessful, false otherwise.
    * @package
    */
