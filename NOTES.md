@@ -3,7 +3,7 @@
 These are either things that need to be done to change this plugin to a gamepad
 plugin, or cleanup the existing code structure to make it easier to work with.
 
-## Gamepad accessibility status
+## ~~Gamepad accessibility status~~ DONE!
 
 For the keyboard navigation plugin currently uses a field called
 [`WorkspaceSvg.keyboardAccessibilityMode`][keyboardAccessibilityMode] on each
@@ -12,6 +12,10 @@ add new fields to the `WorkspaceSvg` class. Instead, we will create a map in the
 `Navigation` class to maintain this bit.
 
 [keyboardAccessibilityMode]:https://developers.google.com/blockly/reference/js/Blockly.WorkspaceSvg#keyboardAccessibilityMode
+
+**Update:** I ended up creating a singleton `AccessibilityStatus` class that
+holds this info, and replaces the `keyboardAccessibilityMode` field throughout
+the project.
 
 ## Registering shortcuts
 

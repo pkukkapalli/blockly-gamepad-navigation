@@ -10,6 +10,7 @@
  */
 
 import * as Blockly from 'blockly/core';
+import {accessibilityStatus} from './accessibility_status';
 import * as Constants from './constants';
 import {
   registrationName as cursorRegistrationName,
@@ -210,7 +211,8 @@ export class Navigation {
    */
   workspaceChangeListener(e) {
     const workspace = Blockly.Workspace.getById(e.workspaceId);
-    if (!workspace || !workspace.keyboardAccessibilityMode) {
+    if (!workspace ||
+        !accessibilityStatus.isGamepadAccessibilityEnabled(workspace)) {
       return;
     }
     switch (e.type) {
@@ -250,7 +252,8 @@ export class Navigation {
     // This is called for simple toolboxes and for toolboxes that have a flyout
     // that does not close. Autoclosing flyouts close before we need to focus
     // the cursor on the block that was clicked.
-    if (mainWorkspace && mainWorkspace.keyboardAccessibilityMode &&
+    if (mainWorkspace &&
+        accessibilityStatus.isGamepadAccessibilityEnabled(mainWorkspace) &&
         !flyout.autoClose) {
       if ((e.type === Blockly.Events.CLICK && e.targetType === 'block')) {
         const block = flyoutWorkspace.getBlockById(e.blockId);
@@ -996,8 +999,8 @@ export class Navigation {
    */
   enableGamepadAccessibility(workspace) {
     if (this.workspaces.indexOf(workspace) > -1 &&
-        !workspace.keyboardAccessibilityMode) {
-      workspace.keyboardAccessibilityMode = true;
+        !accessibilityStatus.isGamepadAccessibilityEnabled(workspace)) {
+      accessibilityStatus.enableGamepadAccessibility(workspace);
       this.focusWorkspace(workspace);
     }
   }
@@ -1010,8 +1013,8 @@ export class Navigation {
    */
   disableGamepadAccessibility(workspace) {
     if (this.workspaces.indexOf(workspace) > -1 &&
-        workspace.keyboardAccessibilityMode) {
-      workspace.keyboardAccessibilityMode = false;
+        accessibilityStatus.isGamepadAccessibilityEnabled(workspace)) {
+      accessibilityStatus.disableGamepadAccessibility(workspace);
       workspace.getCursor().hide();
       this.getMarker(workspace).hide();
       if (this.getFlyoutCursor(workspace)) {

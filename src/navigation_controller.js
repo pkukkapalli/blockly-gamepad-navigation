@@ -15,6 +15,7 @@ import * as Blockly from 'blockly/core';
 
 import * as Constants from './constants';
 import {Navigation} from './navigation';
+import {accessibilityStatus} from './accessibility_status';
 
 /**
  * Class for registering shortcuts for gamepad navigation.
@@ -244,7 +245,7 @@ export class NavigationController {
     const previousShortcut = {
       name: Constants.SHORTCUT_NAMES.PREVIOUS,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode;
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
       callback: (workspace, e, shortcut) => {
         const flyout = workspace.getFlyout();
@@ -289,7 +290,7 @@ export class NavigationController {
     const toggleGamepadNavShortcut = {
       name: Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV,
       callback: (workspace) => {
-        if (workspace.keyboardAccessibilityMode) {
+        if (accessibilityStatus.isGamepadAccessibilityEnabled(workspace)) {
           this.navigation.disableGamepadAccessibility(workspace);
         } else {
           this.navigation.enableGamepadAccessibility(workspace);
@@ -316,7 +317,7 @@ export class NavigationController {
     const outShortcut = {
       name: Constants.SHORTCUT_NAMES.OUT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode;
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
       callback: (workspace, e, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -357,7 +358,7 @@ export class NavigationController {
     const nextShortcut = {
       name: Constants.SHORTCUT_NAMES.NEXT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode;
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
       callback: (workspace, e, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -403,7 +404,7 @@ export class NavigationController {
     const inShortcut = {
       name: Constants.SHORTCUT_NAMES.IN,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode;
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
       callback: (workspace, e, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -445,7 +446,7 @@ export class NavigationController {
     const insertShortcut = {
       name: Constants.SHORTCUT_NAMES.INSERT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -472,7 +473,7 @@ export class NavigationController {
     const markShortcut = {
       name: Constants.SHORTCUT_NAMES.MARK,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -504,7 +505,7 @@ export class NavigationController {
     const disconnectShortcut = {
       name: Constants.SHORTCUT_NAMES.DISCONNECT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -533,7 +534,7 @@ export class NavigationController {
     const focusToolboxShortcut = {
       name: Constants.SHORTCUT_NAMES.TOOLBOX,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -566,7 +567,7 @@ export class NavigationController {
     const exitShortcut = {
       name: Constants.SHORTCUT_NAMES.EXIT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode;
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
       callback: (workspace) => {
         switch (this.navigation.getState(workspace)) {
@@ -599,7 +600,7 @@ export class NavigationController {
     const wsMoveLeftShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -624,7 +625,7 @@ export class NavigationController {
     const wsMoveRightShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -649,7 +650,7 @@ export class NavigationController {
     const wsMoveUpShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -674,7 +675,7 @@ export class NavigationController {
     const wsMoveDownShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly;
       },
       callback: (workspace) => {
@@ -698,7 +699,7 @@ export class NavigationController {
     const copyShortcut = {
       name: Constants.SHORTCUT_NAMES.COPY,
       preconditionFn: (workspace) => {
-        if (workspace.keyboardAccessibilityMode &&
+        if (accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly) {
           const curNode = workspace.getCursor().getCurNode();
           if (curNode && curNode.getSourceBlock()) {
@@ -743,7 +744,7 @@ export class NavigationController {
     const pasteShortcut = {
       name: Constants.SHORTCUT_NAMES.PASTE,
       preconditionFn: (workspace) => {
-        return workspace.keyboardAccessibilityMode &&
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly && !Blockly.Gesture.inProgress();
       },
       callback: () => {
@@ -778,7 +779,7 @@ export class NavigationController {
     const cutShortcut = {
       name: Constants.SHORTCUT_NAMES.CUT,
       preconditionFn: (workspace) => {
-        if (workspace.keyboardAccessibilityMode &&
+        if (accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly) {
           const curNode = workspace.getCursor().getCurNode();
           if (curNode && curNode.getSourceBlock()) {
@@ -826,7 +827,7 @@ export class NavigationController {
     const deleteShortcut = {
       name: Constants.SHORTCUT_NAMES.DELETE,
       preconditionFn: function(workspace) {
-        if (workspace.keyboardAccessibilityMode &&
+        if (accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
             !workspace.options.readOnly) {
           const curNode = workspace.getCursor().getCurNode();
           if (curNode && curNode.getSourceBlock()) {

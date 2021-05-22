@@ -18,6 +18,7 @@ const Blockly = require('blockly/node');
 const {NavigationController, Constants} = require('../src/index');
 const {createNavigationWorkspace, createKeyDownEvent} =
     require('./test_helper');
+const {accessibilityStatus} = require('../src/accessibility_status');
 
 suite('Navigation', function() {
   setup(function() {
@@ -520,12 +521,13 @@ suite('Navigation', function() {
           [Blockly.utils.KeyCodes.SHIFT, Blockly.utils.KeyCodes.CTRL]);
       const keyDownSpy =
           sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      this.workspace.keyboardAccessibilityMode = true;
+      accessibilityStatus.enableGamepadAccessibility(this.workspace);
 
       Blockly.onKeyDown(mockEvent);
 
       chai.assert.isTrue(keyDownSpy.returned(true));
-      chai.assert.isFalse(this.workspace.keyboardAccessibilityMode);
+      chai.assert.isFalse(
+          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
     });
 
     test('Toggle Action On', function() {
@@ -534,12 +536,13 @@ suite('Navigation', function() {
           [Blockly.utils.KeyCodes.SHIFT, Blockly.utils.KeyCodes.CTRL]);
       const keyDownSpy =
           sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      this.workspace.keyboardAccessibilityMode = false;
+      accessibilityStatus.disableGamepadAccessibility(this.workspace);
 
       Blockly.onKeyDown(mockEvent);
 
       chai.assert.isTrue(keyDownSpy.returned(true));
-      chai.assert.isTrue(this.workspace.keyboardAccessibilityMode);
+      chai.assert.isTrue(
+          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
     });
 
     suite('Test key press in read only mode', function() {
@@ -1127,7 +1130,8 @@ suite('Navigation', function() {
     test('Gampead accessibility mode can not be enabled', function() {
       this.navigation.removeWorkspace(this.workspace);
       this.navigation.enableGamepadAccessibility(this.workspace);
-      chai.assert.isFalse(this.workspace.keyboardAccessibilityMode);
+      chai.assert.isFalse(
+          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
     });
     test('Dispose', function() {
       const numListeners = this.workspace.listeners_.length;
