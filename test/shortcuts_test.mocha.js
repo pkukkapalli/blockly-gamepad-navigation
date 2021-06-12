@@ -4,26 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const sinon = require('sinon');
+'use strict';
 
-const Blockly = require('blockly/node');
+import sinon from 'sinon';
+import FakeTimers from '@sinonjs/fake-timers';
 
-const {NavigationController} = require('../src/index');
-const {createNavigationWorkspace, createKeyDownEvent} =
-    require('./test_helper');
+import Blockly from 'blockly';
+
+import {NavigationController, Navigation, GamepadMonitor}
+  from '../src/index';
+import {
+  connectFakeGamepad,
+  createBlocklyDiv,
+  createNavigationWorkspace,
+  createNavigatorGetGamepadsStub,
+  disconnectFakeGamepad}
+  from './test_helper';
+import {GamepadCombination} from '../src/gamepad';
+import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
 
 suite('Shortcut Tests', function() {
   /**
-   * Creates a test for not running keyDown events when the workspace is in read
+   * Creates a test for not running gamepad input when the workspace is in read
    * only mode.
    * @param {string} testCaseName The name of the test case.
-   * @param {Object} keyEvent Mocked key down event. Use createKeyDownEvent.
+   * @param {GamepadCombination} gamepadCombination Gamepad combination to try.
    */
-  function runReadOnlyTest(testCaseName, keyEvent) {
+  function runReadOnlyTest(testCaseName, gamepadCombination) {
     test(testCaseName, function() {
       this.workspace.options.readOnly = true;
       const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
-      Blockly.onKeyDown(keyEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
       sinon.assert.notCalled(hideChaffSpy);
     });
   }
@@ -31,12 +43,13 @@ suite('Shortcut Tests', function() {
   /**
    * Creates a test for not runnin a shortcut when a gesture is in progress.
    * @param {string} testCaseName The name of the test case.
-   * @param {Object} keyEvent Mocked key down event. Use createKeyDownEvent.
+   * @param {GamepadCombination} gamepadCombination Gamepad combination to try.
    */
-  function testGestureInProgress(testCaseName, keyEvent) {
+  function testGestureInProgress(testCaseName, gamepadCombination) {
     test(testCaseName, function() {
       sinon.stub(Blockly.Gesture, 'inProgress').returns(true);
-      Blockly.onKeyDown(keyEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
       const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
       const copySpy = sinon.spy(Blockly, 'copy');
       sinon.assert.notCalled(copySpy);
@@ -48,13 +61,14 @@ suite('Shortcut Tests', function() {
    * Creates a test for not running a shortcut when a the cursor is not on a
    * block.
    * @param {string} testCaseName The name of the test case.
-   * @param {Object} keyEvent Mocked key down event. Use createKeyDownEvent.
+   * @param {GamepadCombination} gamepadCombination Gamepad combination to try.
    */
-  function testCursorOnShadowBlock(testCaseName, keyEvent) {
+  function testCursorOnShadowBlock(testCaseName, gamepadCombination) {
     test(testCaseName, function() {
       const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
       const copySpy = sinon.spy(Blockly, 'copy');
-      Blockly.onKeyDown(keyEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
       sinon.assert.notCalled(copySpy);
       sinon.assert.notCalled(hideChaffSpy);
     });
@@ -63,12 +77,13 @@ suite('Shortcut Tests', function() {
   /**
    * Creates a test for not running a shortcut when the block is not deletable.
    * @param {string} testCaseName The name of the test case.
-   * @param {Object} keyEvent Mocked key down event. Use createKeyDownEvent.
+   * @param {GamepadCombination} gamepadCombination Gamepad combination to try.
    */
-  function testBlockIsNotDeletable(testCaseName, keyEvent) {
+  function testBlockIsNotDeletable(testCaseName, gamepadCombination) {
     test(testCaseName, function() {
       sinon.stub(this.basicBlock, 'isDeletable').returns(false);
-      Blockly.onKeyDown(keyEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
       const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
       const copySpy = sinon.spy(Blockly, 'copy');
       sinon.assert.notCalled(copySpy);
@@ -80,21 +95,24 @@ suite('Shortcut Tests', function() {
    * Creates a test for not running a shortcut when the cursor is not on a
    * block.
    * @param {string} testCaseName The name of the test case.
-   * @param {Object} keyEvent Mocked key down event. Use createKeyDownEvent.
+   * @param {GamepadCombination} gamepadCombination Gamepad combination to try.
    */
-  function testCursorIsNotOnBlock(testCaseName, keyEvent) {
+  function testCursorIsNotOnBlock(testCaseName, gamepadCombination) {
     test(testCaseName, function() {
       const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
       const copySpy = sinon.spy(Blockly, 'copy');
-      Blockly.onKeyDown(keyEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
       sinon.assert.notCalled(copySpy);
       sinon.assert.notCalled(hideChaffSpy);
     });
   }
 
   setup(function() {
-    this.jsdomCleanup =
-        require('jsdom-global')('<!DOCTYPE html><div id="blocklyDiv"></div>');
+    /** @type {FakeTimers.Clock} */
+    this.clock = FakeTimers.install();
+
+    createBlocklyDiv('blocklyDiv');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };
@@ -104,45 +122,45 @@ suite('Shortcut Tests', function() {
       'previousStatement': null,
       'nextStatement': null,
     }]);
-    this.controller = new NavigationController();
+
+    /** @type {Navigation} */
+    this.navigation = new Navigation();
+
+    const gamepadShortcutRegistry = new GamepadShortcutRegistry();
+
+    /** @type {GamepadMonitor} */
+    this.gamepadMonitor = new GamepadMonitor(gamepadShortcutRegistry);
+
+    /** @type {NavigationController} */
+    this.controller = new NavigationController(
+        this.navigation, gamepadShortcutRegistry, this.gamepadMonitor);
     this.controller.init();
-    this.navigation = this.controller.navigation;
-    this.workspace = createNavigationWorkspace(this.navigation, true);
+
+    /** @type {Blockly.WorkspaceSvg} */
+    this.workspace = createNavigationWorkspace(/* readOnly= */ true);
     this.controller.addWorkspace(this.workspace);
+    this.controller.enable(this.workspace);
+
+    /** @type {Blockly.Block} */
     this.basicBlock = this.workspace.newBlock('basic_block');
+
+    connectFakeGamepad();
   });
 
   teardown(function() {
-    this.jsdomCleanup();
+    disconnectFakeGamepad();
     this.controller.dispose();
     delete Blockly.Blocks['basic_block'];
     this.workspace.dispose();
+    this.clock.uninstall();
   });
 
   suite('Copy', function() {
     teardown(function() {
       sinon.restore();
     });
-    const testCases = [
-      [
-        'Control C',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.C, 'NotAField',
-            [Blockly.utils.KeyCodes.CTRL]),
-      ],
-      [
-        'Meta C',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.C, 'NotAField',
-            [Blockly.utils.KeyCodes.META]),
-      ],
-      [
-        'Alt C',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.C, 'NotAField',
-            [Blockly.utils.KeyCodes.ALT]),
-      ],
-    ];
+
+    const testCases = [['Up', GamepadCombination.UP]];
 
     // Copy a block.
     suite('Simple', function() {
@@ -153,11 +171,12 @@ suite('Shortcut Tests', function() {
 
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
+        const gamepadCombination = testCase[1];
         test(testCaseName, function() {
           const hideChaffSpy = sinon.spy(Blockly, 'hideChaff');
           const copySpy = sinon.spy(Blockly, 'copy');
-          Blockly.onKeyDown(keyEvent);
+          createNavigatorGetGamepadsStub(gamepadCombination);
+          this.clock.runToFrame();
           sinon.assert.calledOnce(copySpy);
           sinon.assert.calledOnce(hideChaffSpy);
         });
@@ -173,8 +192,8 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testCursorIsNotOnBlock(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testCursorIsNotOnBlock(testCaseName, gamepadCombination);
       });
     });
 
@@ -187,8 +206,8 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testCursorOnShadowBlock(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testCursorOnShadowBlock(testCaseName, gamepadCombination);
       });
     });
 
@@ -196,8 +215,8 @@ suite('Shortcut Tests', function() {
     suite('Not called when readOnly is true', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        runReadOnlyTest(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        runReadOnlyTest(testCaseName, gamepadCombination);
       });
     });
 
@@ -205,8 +224,8 @@ suite('Shortcut Tests', function() {
     suite('Gesture in progress', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testGestureInProgress(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testGestureInProgress(testCaseName, gamepadCombination);
       });
     });
 
@@ -214,8 +233,8 @@ suite('Shortcut Tests', function() {
     suite('Block is not deletable', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testBlockIsNotDeletable(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testBlockIsNotDeletable(testCaseName, gamepadCombination);
       });
     });
   });
@@ -230,26 +249,19 @@ suite('Shortcut Tests', function() {
       sinon.restore();
     });
 
-    const testCases = [
-      [
-        'Delete',
-        createKeyDownEvent(Blockly.utils.KeyCodes.DELETE, 'NotAField'),
-      ],
-      [
-        'Backspace',
-        createKeyDownEvent(Blockly.utils.KeyCodes.BACKSPACE, 'NotAField'),
-      ],
-    ];
+    const testCases = [['Left', GamepadCombination.LEFT]];
+
     // Delete a block.
     suite('Simple', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
+        const gamepadCombination = testCase[1];
         test(testCaseName, function() {
           const deleteSpy = sinon.spy(Blockly, 'deleteBlock');
           const moveCursorSpy =
               sinon.spy(this.navigation, 'moveCursorOnBlockDelete');
-          Blockly.onKeyDown(keyEvent);
+          createNavigatorGetGamepadsStub(gamepadCombination);
+          this.clock.runToFrame();
           sinon.assert.calledOnce(moveCursorSpy);
           sinon.assert.calledOnce(deleteSpy);
         });
@@ -259,33 +271,14 @@ suite('Shortcut Tests', function() {
     suite('Not called when readOnly is true', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        runReadOnlyTest(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        runReadOnlyTest(testCaseName, gamepadCombination);
       });
     });
   });
 
   suite('Cut', function() {
-    const testCases = [
-      [
-        'Control X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.X, 'NotAField',
-            [Blockly.utils.KeyCodes.CTRL]),
-      ],
-      [
-        'Meta X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.X, 'NotAField',
-            [Blockly.utils.KeyCodes.META]),
-      ],
-      [
-        'Alt X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.X, 'NotAField',
-            [Blockly.utils.KeyCodes.ALT]),
-      ],
-    ];
+    const testCases = [['Right', GamepadCombination.RIGHT]];
 
     teardown(function() {
       sinon.restore();
@@ -299,13 +292,14 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
+        const gamepadCombination = testCase[1];
         test(testCaseName, function() {
           const deleteSpy = sinon.spy(Blockly, 'deleteBlock');
           const copySpy = sinon.spy(Blockly, 'copy');
           const moveCursorSpy =
               sinon.spy(this.navigation, 'moveCursorOnBlockDelete');
-          Blockly.onKeyDown(keyEvent);
+          createNavigatorGetGamepadsStub(gamepadCombination);
+          this.clock.runToFrame();
           sinon.assert.calledOnce(copySpy);
           sinon.assert.calledOnce(deleteSpy);
           sinon.assert.calledOnce(moveCursorSpy);
@@ -322,8 +316,8 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testCursorIsNotOnBlock(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testCursorIsNotOnBlock(testCaseName, gamepadCombination);
       });
     });
 
@@ -336,8 +330,8 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testCursorOnShadowBlock(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testCursorOnShadowBlock(testCaseName, gamepadCombination);
       });
     });
 
@@ -345,8 +339,8 @@ suite('Shortcut Tests', function() {
     suite('Not called when readOnly is true', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        runReadOnlyTest(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        runReadOnlyTest(testCaseName, gamepadCombination);
       });
     });
 
@@ -354,8 +348,8 @@ suite('Shortcut Tests', function() {
     suite('Gesture in progress', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testGestureInProgress(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testGestureInProgress(testCaseName, gamepadCombination);
       });
     });
 
@@ -363,33 +357,14 @@ suite('Shortcut Tests', function() {
     suite('Block is not deletable', function() {
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
-        testBlockIsNotDeletable(testCaseName, keyEvent);
+        const gamepadCombination = testCase[1];
+        testBlockIsNotDeletable(testCaseName, gamepadCombination);
       });
     });
   });
 
   suite('Paste', function() {
-    const testCases = [
-      [
-        'Control X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.V, 'NotAField',
-            [Blockly.utils.KeyCodes.CTRL]),
-      ],
-      [
-        'Meta X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.V, 'NotAField',
-            [Blockly.utils.KeyCodes.META]),
-      ],
-      [
-        'Alt X',
-        createKeyDownEvent(
-            Blockly.utils.KeyCodes.V, 'NotAField',
-            [Blockly.utils.KeyCodes.ALT]),
-      ],
-    ];
+    const testCases = [['Down', GamepadCombination.DOWN]];
 
     teardown(function() {
       sinon.restore();
@@ -403,10 +378,11 @@ suite('Shortcut Tests', function() {
       });
       testCases.forEach(function(testCase) {
         const testCaseName = testCase[0];
-        const keyEvent = testCase[1];
+        const gamepadCombination = testCase[1];
         test(testCaseName, function() {
           const pasteSpy = sinon.stub(this.navigation, 'paste');
-          Blockly.onKeyDown(keyEvent);
+          createNavigatorGetGamepadsStub(gamepadCombination);
+          this.clock.runToFrame();
           sinon.assert.calledOnce(pasteSpy);
         });
       });

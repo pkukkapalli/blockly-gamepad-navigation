@@ -149,7 +149,7 @@ export class Navigation {
    * Sets the state for the given workspace.
    * @param {!Blockly.WorkspaceSvg} workspace The workspace to set the state on.
    * @param {!Constants.STATE} state The navigation state.
-   * @protected
+   * @public
    */
   setState(workspace, state) {
     this.workspaceStates[workspace.id] = state;

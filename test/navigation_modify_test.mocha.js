@@ -4,11 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const chai = require('chai');
-const Blockly = require('blockly/node');
-const {Navigation} = require('../src/navigation');
+import chai from 'chai';
+import Blockly from 'blockly';
+import {Navigation} from '../src/navigation';
+import {testHelpers} from '@blockly/dev-tools';
+import {createBlocklyDiv} from './test_helper';
+
 const assert = chai.assert;
-const {testHelpers} = require('@blockly/dev-tools');
 const {captureWarnings} = testHelpers;
 
 suite('Insert/Modify', function() {
@@ -71,8 +73,7 @@ suite('Insert/Modify', function() {
   }
 
   setup(function() {
-    this.jsdomCleanup =
-        require('jsdom-global')('<!DOCTYPE html><div id="blocklyDiv"></div>');
+    createBlocklyDiv('blocklyDiv');
     // NOTE: block positions chosen such that they aren't unintentionally
     // bumped out of bounds during tests.
     const xmlText = `<xml xmlns="https://developers.google.com/blockly/xml">
@@ -115,7 +116,6 @@ suite('Insert/Modify', function() {
     delete Blockly.Blocks['stack_block'];
     delete Blockly.Blocks['row_block'];
     delete Blockly.Blocks['statement_block'];
-    this.jsdomCleanup();
   });
 
   suite('Marked Connection', function() {

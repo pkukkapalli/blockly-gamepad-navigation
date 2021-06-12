@@ -14,7 +14,7 @@
  */
 
 import * as Blockly from 'blockly/core';
-import {accessbilityStatus} from './accessibility_status';
+import {accessibilityStatus} from './accessibility_status';
 
 
 const oldDoWorkspaceClick = Blockly.Gesture.prototype.doWorkspaceClick_;
@@ -29,7 +29,7 @@ const oldDoWorkspaceClick = Blockly.Gesture.prototype.doWorkspaceClick_;
 Blockly.Gesture.prototype.doWorkspaceClick_ = function(e) {
   oldDoWorkspaceClick.call(this, e);
   const ws = this.creatorWorkspace_;
-  if (e.shiftKey && accessbilityStatus.isGamepadAccessibilityEnabled(ws)) {
+  if (e.shiftKey && accessibilityStatus.isGamepadAccessibilityEnabled(ws)) {
     const screenCoord = new Blockly.utils.Coordinate(e.clientX, e.clientY);
     const wsCoord = Blockly.utils.screenToWsCoordinates(ws, screenCoord);
     const wsNode = Blockly.ASTNode.createWorkspaceNode(ws, wsCoord);
@@ -48,7 +48,7 @@ const oldDoBlockClick = Blockly.Gesture.prototype.doBlockClick_;
 Blockly.Gesture.prototype.doBlockClick_ = function(e) {
   oldDoBlockClick.call(this, e);
   if (!this.targetBlock_.isInFlyout && this.mostRecentEvent_.shiftKey &&
-      accessbilityStatus.isGamepadAccessibilityEnabled(
+      accessibilityStatus.isGamepadAccessibilityEnabled(
           this.targetBlock_.workspace)) {
     this.creatorWorkspace_.getCursor().setCurNode(
         Blockly.ASTNode.createTopNode(this.targetBlock_));

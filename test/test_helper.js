@@ -4,9 +4,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-const {Constants} = require('../src/index');
-const {Navigation} = require('../src/index');
-const Blockly = require('blockly/node');
+import Blockly from 'blockly';
+import sinon from 'sinon';
+import {GamepadCombination} from '../src/gamepad';
+import {Navigation} from '../src/navigation';
+import * as Constants from '../src/constants';
+
+/**
+ * Appends a div with the given ID to the document body.
+ * @param {string} id The ID to assign to the element.
+ */
+export function createBlocklyDiv(id) {
+  if (document.getElementById(id)) {
+    return;
+  }
+  const element = document.createElement('div');
+  element.id = id;
+  document.body.append(element);
+}
 
 /**
  * Creates a workspace for testing gamepad navigation.
@@ -39,6 +54,8 @@ export function createNavigationWorkspace(
     readOnly: readOnly,
   });
   if (enableGamepadNav) {
+    // TODO(pkukkapalli): replace this with NavigationController for
+    // consistency.
     navigation.addWorkspace(workspace);
     navigation.enableGamepadAccessibility(workspace);
     navigation.setState(workspace, Constants.STATE.WORKSPACE);
@@ -47,39 +64,31 @@ export function createNavigationWorkspace(
 }
 
 /**
- * Creates a key down event used for testing.
- * @param {number} keyCode The keycode for the event. Use Blockly.utils.KeyCodes
- *     enum.
- * @param {string} type The type of the target. This only matters for the
- *     Blockly.utils.isTargetInput method.
- * @param {Array<number>} modifiers A list of modifiers. Use
- *     Blockly.utils.KeyCodes enum.
- * @return {Object} The mocked keydown
- * event.
+ * Fires an event to indicate that a gamepad has been connected.
  */
-export function createKeyDownEvent(keyCode, type, modifiers) {
-  const event = {
-    keyCode: keyCode,
-    target: {type: type},
-    getModifierState: function(name) {
-      if (name == 'Shift' && this.shiftKey) {
-        return true;
-      } else if (name == 'Control' && this.ctrlKey) {
-        return true;
-      } else if (name == 'Meta' && this.metaKey) {
-        return true;
-      } else if (name == 'Alt' && this.altKey) {
-        return true;
-      }
-      return false;
-    },
-    preventDefault: function() {},
-  };
-  if (modifiers && modifiers.length > 0) {
-    event.altKey = modifiers.indexOf(Blockly.utils.KeyCodes.ALT) > -1;
-    event.ctrlKey = modifiers.indexOf(Blockly.utils.KeyCodes.CTRL) > -1;
-    event.metaKey = modifiers.indexOf(Blockly.utils.KeyCodes.META) > -1;
-    event.shiftKey = modifiers.indexOf(Blockly.utils.KeyCodes.SHIFT) > -1;
-  }
-  return event;
+export function connectFakeGamepad() {
+  const event = new Event('gamepadconnected');
+  event.gamepad = {index: 0};
+  window.dispatchEvent(event);
+}
+
+/**
+ * Fires an event to indicate that a gamepad has been disconnected.
+ */
+export function disconnectFakeGamepad() {
+  const event = new Event('gamepaddisconnected');
+  event.gamepad = {index: 0};
+  window.dispatchEvent(event);
+}
+
+/**
+ * Stubs the navigator.getGamepads method to have a gamepad with the given
+ * button/axis combination active.
+ * @param {!GamepadCombination} gamepadCombination The gamepad combination to
+ *     populate the gamepad with.
+ * @return {sinon.SinonStub<[], Gamepad[]>} The created stub.
+ */
+export function createNavigatorGetGamepadsStub(gamepadCombination) {
+  return sinon.stub(navigator, 'getGamepads')
+      .callsFake(() => [gamepadCombination.asGamepad()]);
 }

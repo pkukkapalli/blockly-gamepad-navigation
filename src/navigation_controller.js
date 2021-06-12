@@ -16,6 +16,10 @@ import * as Blockly from 'blockly/core';
 import * as Constants from './constants';
 import {Navigation} from './navigation';
 import {accessibilityStatus} from './accessibility_status';
+import {GamepadShortcut, GamepadShortcutRegistry} from
+  './gamepad_shortcut_registry';
+import {GamepadMonitor} from './gamepad_monitor';
+import {GamepadButton, GamepadCombination} from './gamepad';
 
 /**
  * Class for registering shortcuts for gamepad navigation.
@@ -27,14 +31,34 @@ export class NavigationController {
    * This is intended to be a singleton.
    * @param {!Navigation=} optNavigation The class that handles gamepad
    *     navigation shortcuts. (Ex: inserting a block, focusing the flyout).
+   * @param {!GamepadShortcutRegistry=} optGamepadShortcutRegistry The shortcut
+   *     registry to use.
+   * @param {!GamepadMonitor=} optGamepadMonitor The gamepad monitor to use for
+   *     getting input from the gamepad.
    */
-  constructor(optNavigation) {
+  constructor(optNavigation, optGamepadShortcutRegistry, optGamepadMonitor) {
     /**
      * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
      * @public
      */
     this.navigation = optNavigation || new Navigation();
+
+    /**
+     * Registers all of the shortcuts for the gamepad.
+     * @type {!GamepadShortcutRegistry}
+     * @public
+     */
+    this.gamepadShortcutRegistry = optGamepadShortcutRegistry ||
+        new GamepadShortcutRegistry();
+
+    /**
+     * Monitors input from the gamepad and triggers the correct shortcuts.
+     * @type {!GamepadMonitor}
+     * @public
+     */
+    this.gamepadMonitor = optGamepadMonitor ||
+        new GamepadMonitor(this.gamepadShortcutRegistry);
   }
 
   /**
@@ -44,6 +68,7 @@ export class NavigationController {
   init() {
     this.addShortcutHandlers();
     this.registerDefaults();
+    this.gamepadMonitor.init();
   }
 
   /**
@@ -87,8 +112,7 @@ export class NavigationController {
   /**
    * Handles the given gamepad shortcut.
    * This is only triggered when gamepad accessibility mode is enabled.
-   * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
-   *     to be handled.
+   * @param {!GamepadShortcut} shortcut The shortcut to be handled.
    * @return {boolean} True if the field handled the shortcut,
    *     false otherwise.
    * @this {Blockly.FieldColour}
@@ -119,8 +143,7 @@ export class NavigationController {
   /**
    * Handles the given gamepad shortcut.
    * This is only triggered when gamepad accessibility mode is enabled.
-   * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
-   *     to be handled.
+   * @param {!GamepadShortcut} shortcut The shortcut to be handled.
    * @return {boolean} True if the field handled the shortcut,
    *     false otherwise.
    * @this {Blockly.FieldDropdown}
@@ -145,8 +168,7 @@ export class NavigationController {
   /**
    * Handles the given gamepad shortcut.
    * This is only triggered when gamepad accessibility mode is enabled.
-   * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
-   *     to be handled.
+   * @param {!GamepadShortcut} shortcut The shortcut to be handled.
    * @return {boolean} True if the toolbox handled the shortcut,
    *     false otherwise.
    * @this {Blockly.Toolbox}
@@ -180,6 +202,7 @@ export class NavigationController {
    */
   addWorkspace(workspace) {
     this.navigation.addWorkspace(workspace);
+    this.gamepadMonitor.addWorkspace(workspace);
   }
 
   /**
@@ -191,6 +214,7 @@ export class NavigationController {
    */
   removeWorkspace(workspace) {
     this.navigation.removeWorkspace(workspace);
+    this.gamepadMonitor.removeWorkspace(workspace);
   }
 
   /**
@@ -216,8 +240,7 @@ export class NavigationController {
   /**
    * Gives the cursor to the field to handle if the cursor is on a field.
    * @param {!Blockly.WorkspaceSvg} workspace The workspace to check.
-   * @param {!Blockly.ShortcutRegistry.KeyboardShortcut} shortcut The shortcut
-   *     to give to the field.
+   * @param {!GamepadShortcut} shortcut The shortcut to give to the field.
    * @return {boolean} True if the shortcut was handled by the field, false
    *     otherwise.
    * @protected
@@ -241,13 +264,13 @@ export class NavigationController {
    * @protected
    */
   registerPrevious() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const previousShortcut = {
       name: Constants.SHORTCUT_NAMES.PREVIOUS,
       preconditionFn: (workspace) => {
         return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
-      callback: (workspace, e, shortcut) => {
+      callback: (workspace, combination, shortcut) => {
         const flyout = workspace.getFlyout();
         const toolbox = workspace.getToolbox();
         let isHandled = false;
@@ -276,9 +299,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(previousShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.W, previousShortcut.name);
+    this.gamepadShortcutRegistry.register(previousShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.LEFT_STICK_UP, previousShortcut.name);
   }
 
   /**
@@ -286,7 +309,7 @@ export class NavigationController {
    * @protected
    */
   registerToggleGamepadNav() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const toggleGamepadNavShortcut = {
       name: Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV,
       callback: (workspace) => {
@@ -299,12 +322,12 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(toggleGamepadNavShortcut);
-    const ctrlShiftK = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.K,
-        [Blockly.utils.KeyCodes.CTRL, Blockly.utils.KeyCodes.SHIFT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        ctrlShiftK, toggleGamepadNavShortcut.name);
+    this.gamepadShortcutRegistry.register(toggleGamepadNavShortcut);
+    const l1AndR1 = new GamepadCombination()
+        .addButton(GamepadButton.L1)
+        .addButton(GamepadButton.R1);
+    this.gamepadShortcutRegistry.addCombinationMapping(l1AndR1,
+        toggleGamepadNavShortcut.name);
   }
 
   /**
@@ -313,13 +336,13 @@ export class NavigationController {
    * @protected
    */
   registerOut() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const outShortcut = {
       name: Constants.SHORTCUT_NAMES.OUT,
       preconditionFn: (workspace) => {
         return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
-      callback: (workspace, e, shortcut) => {
+      callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
         let isHandled = false;
         switch (this.navigation.getState(workspace)) {
@@ -343,9 +366,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(outShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.A, outShortcut.name);
+    this.gamepadShortcutRegistry.register(outShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.LEFT_STICK_LEFT, outShortcut.name);
   }
 
   /**
@@ -354,13 +377,13 @@ export class NavigationController {
    * @protected
    */
   registerNext() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const nextShortcut = {
       name: Constants.SHORTCUT_NAMES.NEXT,
       preconditionFn: (workspace) => {
         return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
-      callback: (workspace, e, shortcut) => {
+      callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
         const flyout = workspace.getFlyout();
         let isHandled = false;
@@ -389,9 +412,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(nextShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.S, nextShortcut.name);
+    this.gamepadShortcutRegistry.register(nextShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.LEFT_STICK_DOWN, nextShortcut.name);
   }
 
   /**
@@ -400,13 +423,13 @@ export class NavigationController {
    * @protected
    */
   registerIn() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const inShortcut = {
       name: Constants.SHORTCUT_NAMES.IN,
       preconditionFn: (workspace) => {
         return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
-      callback: (workspace, e, shortcut) => {
+      callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
         let isHandled = false;
         switch (this.navigation.getState(workspace)) {
@@ -431,9 +454,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(inShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.D, inShortcut.name);
+    this.gamepadShortcutRegistry.register(inShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.LEFT_STICK_RIGHT, inShortcut.name);
   }
 
   /**
@@ -442,7 +465,7 @@ export class NavigationController {
    * @protected
    */
   registerInsert() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const insertShortcut = {
       name: Constants.SHORTCUT_NAMES.INSERT,
       preconditionFn: (workspace) => {
@@ -459,9 +482,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(insertShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.I, insertShortcut.name);
+    this.gamepadShortcutRegistry.register(insertShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.TRIANGLE, insertShortcut.name);
   }
 
   /**
@@ -469,7 +492,7 @@ export class NavigationController {
    * @protected
    */
   registerMark() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const markShortcut = {
       name: Constants.SHORTCUT_NAMES.MARK,
       preconditionFn: (workspace) => {
@@ -490,9 +513,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(markShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.ENTER, markShortcut.name);
+    this.gamepadShortcutRegistry.register(markShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.CROSS, markShortcut.name);
   }
 
   /**
@@ -501,7 +524,7 @@ export class NavigationController {
    * @protected
    */
   registerDisconnect() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const disconnectShortcut = {
       name: Constants.SHORTCUT_NAMES.DISCONNECT,
       preconditionFn: (workspace) => {
@@ -519,9 +542,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(disconnectShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.X, disconnectShortcut.name);
+    this.gamepadShortcutRegistry.register(disconnectShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.CIRCLE, disconnectShortcut.name);
   }
 
   /**
@@ -530,7 +553,7 @@ export class NavigationController {
    * @protected
    */
   registerToolboxFocus() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const focusToolboxShortcut = {
       name: Constants.SHORTCUT_NAMES.TOOLBOX,
       preconditionFn: (workspace) => {
@@ -552,9 +575,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(focusToolboxShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.T, focusToolboxShortcut.name);
+    this.gamepadShortcutRegistry.register(focusToolboxShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.SQUARE, focusToolboxShortcut.name);
   }
 
   /**
@@ -563,7 +586,7 @@ export class NavigationController {
    * @protected
    */
   registerExit() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const exitShortcut = {
       name: Constants.SHORTCUT_NAMES.EXIT,
       preconditionFn: (workspace) => {
@@ -583,11 +606,11 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(exitShortcut, true);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.ESC, exitShortcut.name, true);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.E, exitShortcut.name, true);
+    this.gamepadShortcutRegistry.register(
+        exitShortcut, /* optAllowOverrides= */ true);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.CIRCLE, exitShortcut.name,
+        /* optAllowCollision= */ true);
   }
 
   /**
@@ -596,7 +619,7 @@ export class NavigationController {
    * @protected
    */
   registerWorkspaceMoveLeft() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const wsMoveLeftShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT,
       preconditionFn: (workspace) => {
@@ -608,11 +631,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(wsMoveLeftShortcut);
-    const shiftA = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.A, [Blockly.utils.KeyCodes.SHIFT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        shiftA, wsMoveLeftShortcut.name);
+    this.gamepadShortcutRegistry.register(wsMoveLeftShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.RIGHT_STICK_LEFT, wsMoveLeftShortcut.name);
   }
 
   /**
@@ -621,7 +642,7 @@ export class NavigationController {
    * @protected
    */
   registerWorkspaceMoveRight() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const wsMoveRightShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT,
       preconditionFn: (workspace) => {
@@ -633,11 +654,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(wsMoveRightShortcut);
-    const shiftD = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.D, [Blockly.utils.KeyCodes.SHIFT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        shiftD, wsMoveRightShortcut.name);
+    this.gamepadShortcutRegistry.register(wsMoveRightShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.RIGHT_STICK_RIGHT, wsMoveRightShortcut.name);
   }
 
   /**
@@ -646,7 +665,7 @@ export class NavigationController {
    * @protected
    */
   registerWorkspaceMoveUp() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const wsMoveUpShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP,
       preconditionFn: (workspace) => {
@@ -658,11 +677,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(wsMoveUpShortcut);
-    const shiftW = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.W, [Blockly.utils.KeyCodes.SHIFT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        shiftW, wsMoveUpShortcut.name);
+    this.gamepadShortcutRegistry.register(wsMoveUpShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.RIGHT_STICK_UP, wsMoveUpShortcut.name);
   }
 
   /**
@@ -671,7 +688,7 @@ export class NavigationController {
    * @protected
    */
   registerWorkspaceMoveDown() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const wsMoveDownShortcut = {
       name: Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN,
       preconditionFn: (workspace) => {
@@ -683,11 +700,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(wsMoveDownShortcut);
-    const shiftW = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.S, [Blockly.utils.KeyCodes.SHIFT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        shiftW, wsMoveDownShortcut.name);
+    this.gamepadShortcutRegistry.register(wsMoveDownShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.RIGHT_STICK_DOWN, wsMoveDownShortcut.name);
   }
 
   /**
@@ -717,22 +732,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(copyShortcut);
-
-    const ctrlC = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.C, [Blockly.utils.KeyCodes.CTRL]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        ctrlC, copyShortcut.name, true);
-
-    const altC = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.C, [Blockly.utils.KeyCodes.ALT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        altC, copyShortcut.name, true);
-
-    const metaC = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.C, [Blockly.utils.KeyCodes.META]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        metaC, copyShortcut.name, true);
+    this.gamepadShortcutRegistry.register(copyShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.UP, copyShortcut.name);
   }
 
   /**
@@ -752,22 +754,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(pasteShortcut);
-
-    const ctrlV = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.V, [Blockly.utils.KeyCodes.CTRL]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        ctrlV, pasteShortcut.name, true);
-
-    const altV = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.V, [Blockly.utils.KeyCodes.ALT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        altV, pasteShortcut.name, true);
-
-    const metaV = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.V, [Blockly.utils.KeyCodes.META]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        metaV, pasteShortcut.name, true);
+    this.gamepadShortcutRegistry.register(pasteShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.DOWN, pasteShortcut.name);
   }
 
   /**
@@ -800,22 +789,9 @@ export class NavigationController {
       },
     };
 
-    Blockly.ShortcutRegistry.registry.register(cutShortcut);
-
-    const ctrlX = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.X, [Blockly.utils.KeyCodes.CTRL]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        ctrlX, cutShortcut.name, true);
-
-    const altX = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.X, [Blockly.utils.KeyCodes.ALT]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        altX, cutShortcut.name, true);
-
-    const metaX = Blockly.ShortcutRegistry.registry.createSerializedKey(
-        Blockly.utils.KeyCodes.X, [Blockly.utils.KeyCodes.META]);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        metaX, cutShortcut.name, true);
+    this.gamepadShortcutRegistry.register(cutShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.RIGHT, cutShortcut.name);
   }
 
   /**
@@ -837,13 +813,8 @@ export class NavigationController {
         }
         return false;
       },
-      callback: (workspace, e) => {
+      callback: (workspace) => {
         const sourceBlock = workspace.getCursor().getCurNode().getSourceBlock();
-        // Delete or backspace.
-        // Stop the browser from going back to the previous page.
-        // Do this first to prevent an error in the delete code from resulting
-        // in data loss.
-        e.preventDefault();
         // Don't delete while dragging.  Jeez.
         if (Blockly.Gesture.inProgress()) {
           return false;
@@ -853,11 +824,10 @@ export class NavigationController {
         return true;
       },
     };
-    Blockly.ShortcutRegistry.registry.register(deleteShortcut);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.DELETE, deleteShortcut.name, true);
-    Blockly.ShortcutRegistry.registry.addKeyMapping(
-        Blockly.utils.KeyCodes.BACKSPACE, deleteShortcut.name, true);
+
+    this.gamepadShortcutRegistry.register(deleteShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        GamepadCombination.LEFT, deleteShortcut.name);
   }
 
   /**
@@ -896,9 +866,10 @@ export class NavigationController {
   dispose() {
     const shortcutNames = Object.values(Constants.SHORTCUT_NAMES);
     for (const name of shortcutNames) {
-      Blockly.ShortcutRegistry.registry.unregister(name);
+      this.gamepadShortcutRegistry.unregister(name);
     }
     this.removeShortcutHandlers();
     this.navigation.dispose();
+    this.gamepadMonitor.dispose();
   }
 }
