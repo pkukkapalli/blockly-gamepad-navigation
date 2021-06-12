@@ -1,45 +1,61 @@
-/**
- * @license
- * Copyright 2020 Google LLC
- * SPDX-License-Identifier: Apache-2.0
- */
-
-/**
- * @fileoverview
- * @author aschmiedt@google.com (Abby Schmiedt)
- */
 'use strict';
 
 
-const chai = require('chai');
-const sinon = require('sinon');
+import chai from 'chai';
+import sinon from 'sinon';
+import FakeTimers from '@sinonjs/fake-timers';
 
-const Blockly = require('blockly/node');
-const {NavigationController, Constants} = require('../src/index');
-const {createNavigationWorkspace, createKeyDownEvent} =
-    require('./test_helper');
-const {accessibilityStatus} = require('../src/accessibility_status');
+// const Blockly = require('blockly/node');
+import Blockly from 'blockly';
+import {NavigationController, Navigation, GamepadMonitor, Constants}
+  from '../src/index';
+import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
+import {
+  createNavigationWorkspace,
+  createNavigatorGetGamepadsStub,
+  createBlocklyDiv,
+  connectFakeGamepad,
+  disconnectFakeGamepad} from './test_helper';
+import {accessibilityStatus} from '../src/accessibility_status';
+import {GamepadCombination, GamepadButton} from '../src/gamepad';
 
 suite('Navigation', function() {
   setup(function() {
-    this.jsdomCleanup =
-        require('jsdom-global')('<!DOCTYPE html><div id="blocklyDiv"></div>');
+    /** @type {FakeTimers.Clock} */
+    this.clock = FakeTimers.install();
+
+    createBlocklyDiv('blocklyDiv');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };
-    this.controller = new NavigationController();
+
+    /** @type {NavigationController} */
+    this.navigation = new Navigation();
+
+    /** @type {GamepadShortcutRegistry} */
+    this.gamepadShortcutRegistry = new GamepadShortcutRegistry();
+
+    /** @type {GamepadMonitor} */
+    this.gamepadMonitor = new GamepadMonitor(this.gamepadShortcutRegistry);
+
+    /** @type {NavigationController} */
+    this.controller = new NavigationController(
+        this.navigation, this.gamepadShortcutRegistry, this.gamepadMonitor);
     this.controller.init();
-    this.navigation = this.controller.navigation;
+
+    connectFakeGamepad();
   });
 
   teardown(function() {
+    disconnectFakeGamepad();
     this.controller.dispose();
-    this.jsdomCleanup();
+
+    this.clock.uninstall();
   });
 
-  // Test that toolbox key handlers call through to the right functions and
+  // Test that toolbox handlers call through to the right functions and
   // transition correctly between toolbox, workspace, and flyout.
-  suite('Tests toolbox keys', function() {
+  suite('Tests toolbox input', function() {
     setup(function() {
       Blockly.defineBlocksWithJsonArray([{
         'type': 'basic_block',
@@ -53,10 +69,12 @@ suite('Navigation', function() {
         ],
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
       this.navigation.focusToolbox(this.workspace);
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -65,49 +83,49 @@ suite('Navigation', function() {
     const testCases = [
       [
         'Calls toolbox selectNext',
-        createKeyDownEvent(Blockly.utils.KeyCodes.S, 'NotAField'),
+        GamepadCombination.LEFT_STICK_DOWN,
         'selectNext_',
       ],
       [
         'Calls toolbox selectPrevious',
-        createKeyDownEvent(Blockly.utils.KeyCodes.W, 'NotAField'),
+        GamepadCombination.LEFT_STICK_UP,
         'selectPrevious_',
       ],
       [
         'Calls toolbox selectParent',
-        createKeyDownEvent(Blockly.utils.KeyCodes.D, 'NotAField'),
+        GamepadCombination.LEFT_STICK_RIGHT,
         'selectChild_',
       ],
       [
         'Calls toolbox selectChild',
-        createKeyDownEvent(Blockly.utils.KeyCodes.A, 'NotAField'),
+        GamepadCombination.LEFT_STICK_LEFT,
         'selectParent_',
       ],
     ];
 
-    testCases.forEach(function(testCase) {
-      const testCaseName = testCase[0];
-      const mockEvent = testCase[1];
-      const stubName = testCase[2];
+    for (const [testCaseName, gamepadCombination, stubName] of testCases) {
       test(testCaseName, function() {
         const toolbox = this.workspace.getToolbox();
         const selectStub = sinon.stub(toolbox, stubName);
         toolbox.selectedItem_ = toolbox.contents_[0];
-        Blockly.onKeyDown(mockEvent);
+
+        createNavigatorGetGamepadsStub(gamepadCombination);
+        this.clock.runToFrame();
+
         sinon.assert.called(selectStub);
       });
-    });
+    }
 
     test('Go to flyout', function() {
       const navigation = this.navigation;
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.D, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_RIGHT;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           navigation.getState(this.workspace), Constants.STATE.FLYOUT);
 
@@ -117,31 +135,17 @@ suite('Navigation', function() {
           'FirstCategory-FirstBlock');
     });
 
-    test('Focuses workspace from toolbox (e)', function() {
+    test('Focuses workspace from toolbox (Circle)', function() {
       const navigation = this.navigation;
       navigation.setState(this.workspace, Constants.STATE.TOOLBOX);
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.E, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.CIRCLE;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
-      chai.assert.equal(
-          navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
-    });
-    test('Focuses workspace from toolbox (escape)', function() {
-      const navigation = this.navigation;
-      navigation.setState(this.workspace, Constants.STATE.TOOLBOX);
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.ESC, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-
-      Blockly.onKeyDown(mockEvent);
-
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
     });
@@ -163,25 +167,28 @@ suite('Navigation', function() {
         ],
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
       this.navigation.focusToolbox(this.workspace);
       this.navigation.focusFlyout(this.workspace);
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
     });
+
     // Should be a no-op
     test('Previous at beginning', function() {
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.W, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_UP;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.FLYOUT);
       chai.assert.equal(
@@ -191,6 +198,7 @@ suite('Navigation', function() {
               .getFieldValue('TEXT'),
           'FirstCategory-FirstBlock');
     });
+
     test('Previous', function() {
       const flyoutBlocks =
           this.workspace.getFlyout().getWorkspace().getTopBlocks();
@@ -202,14 +210,14 @@ suite('Navigation', function() {
       chai.assert.equal(
           flyoutBlock.getFieldValue('TEXT'), 'FirstCategory-SecondBlock');
 
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.W, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_UP;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.FLYOUT);
       flyoutBlock = this.navigation.getFlyoutCursor(this.workspace)
@@ -220,14 +228,14 @@ suite('Navigation', function() {
     });
 
     test('Next', function() {
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.S, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_DOWN;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.FLYOUT);
       const flyoutBlock = this.navigation.getFlyoutCursor(this.workspace)
@@ -238,27 +246,27 @@ suite('Navigation', function() {
     });
 
     test('Out', function() {
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.A, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_LEFT;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.TOOLBOX);
     });
 
     test('Mark', function() {
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.ENTER, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.CROSS;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
       chai.assert.equal(this.workspace.getTopBlocks().length, 1);
@@ -271,14 +279,14 @@ suite('Navigation', function() {
       const flyout = this.workspace.getFlyout();
       const topBlock = flyout.getWorkspace().getTopBlocks()[0];
       topBlock.setEnabled(false);
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.ENTER, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.CROSS;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.FLYOUT);
       chai.assert.equal(this.workspace.getTopBlocks().length, 0);
@@ -286,18 +294,19 @@ suite('Navigation', function() {
     });
 
     test('Exit', function() {
-      const mockEvent =
-          createKeyDownEvent(Blockly.utils.KeyCodes.ESC, 'NotAField');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = GamepadCombination.CIRCLE;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
     });
   });
+
   // Test that workspace key handlers call through to the right functions and
   // transition correctly between toolbox, workspace, and flyout.
   suite('Tests workspace keys', function() {
@@ -316,10 +325,12 @@ suite('Navigation', function() {
         'nextStatement': null,
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
       this.basicBlock = this.workspace.newBlock('basic_block');
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -327,13 +338,14 @@ suite('Navigation', function() {
 
     test('Previous', function() {
       const prevSpy = sinon.spy(this.workspace.getCursor(), 'prev');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const wEvent = createKeyDownEvent(Blockly.utils.KeyCodes.W, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_UP;
 
-      Blockly.onKeyDown(wEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(prevSpy);
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
@@ -341,13 +353,14 @@ suite('Navigation', function() {
 
     test('Next', function() {
       const nextSpy = sinon.spy(this.workspace.getCursor(), 'next');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const sEvent = createKeyDownEvent(Blockly.utils.KeyCodes.S, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_DOWN;
 
-      Blockly.onKeyDown(sEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(nextSpy);
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
@@ -355,13 +368,14 @@ suite('Navigation', function() {
 
     test('Out', function() {
       const outSpy = sinon.spy(this.workspace.getCursor(), 'out');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const aEvent = createKeyDownEvent(Blockly.utils.KeyCodes.A, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_LEFT;
 
-      Blockly.onKeyDown(aEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(outSpy);
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
@@ -369,13 +383,14 @@ suite('Navigation', function() {
 
     test('In', function() {
       const inSpy = sinon.spy(this.workspace.getCursor(), 'in');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const dEvent = createKeyDownEvent(Blockly.utils.KeyCodes.D, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_RIGHT;
 
-      Blockly.onKeyDown(dEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(inSpy);
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
@@ -389,13 +404,14 @@ suite('Navigation', function() {
       const modifyStub =
           sinon.stub(this.navigation, 'tryToConnectMarkerAndCursor')
               .returns(true);
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const iEvent = createKeyDownEvent(Blockly.utils.KeyCodes.I, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.TRIANGLE;
 
-      Blockly.onKeyDown(iEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(modifyStub);
       chai.assert.equal(
           this.navigation.getState(this.workspace), Constants.STATE.WORKSPACE);
@@ -405,15 +421,16 @@ suite('Navigation', function() {
       this.workspace.getCursor().setCurNode(
           Blockly.ASTNode.createConnectionNode(
               this.basicBlock.previousConnection));
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const enterEvent = createKeyDownEvent(Blockly.utils.KeyCodes.ENTER, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.CROSS;
 
-      Blockly.onKeyDown(enterEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
       const markedNode =
           this.workspace.getMarker(this.navigation.MARKER_NAME).getCurNode();
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           markedNode.getLocation(), this.basicBlock.previousConnection);
       chai.assert.equal(
@@ -421,14 +438,15 @@ suite('Navigation', function() {
     });
 
     test('Toolbox', function() {
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
-      const tEvent = createKeyDownEvent(Blockly.utils.KeyCodes.T, '');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
+      const gamepadCombination = GamepadCombination.SQUARE;
 
-      Blockly.onKeyDown(tEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
       const firstCategory = this.workspace.getToolbox().contents_[0];
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.equal(
           this.workspace.getToolbox().getSelectedItem(), firstCategory);
       chai.assert.equal(
@@ -456,11 +474,12 @@ suite('Navigation', function() {
         ],
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
-
+      this.controller.addWorkspace(this.workspace);
       this.workspace.getCursor().drawer_ = null;
       this.basicBlock = this.workspace.newBlock('basic_block');
     });
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -471,76 +490,82 @@ suite('Navigation', function() {
       const block = this.workspace.getTopBlocks()[0];
       const field = block.inputList[0].fieldRow[0];
       const fieldSpy = sinon.spy(field, 'onShortcut');
-      const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.N, '');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = new GamepadCombination()
+          .addButton(GamepadButton.SELECT);
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
       this.workspace.getCursor().setCurNode(
           Blockly.ASTNode.createFieldNode(field));
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isFalse(keyDownSpy.returned(true));
+      chai.assert.isFalse(onActivateSpy.returned(true));
       sinon.assert.notCalled(fieldSpy);
     });
 
     test('Action exists - field handles action', function() {
       const block = this.workspace.getTopBlocks()[0];
       const field = block.inputList[0].fieldRow[0];
-      const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.A, '');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_LEFT;
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
       const fieldSpy = sinon.stub(field, 'onShortcut').returns(true);
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
       this.workspace.getCursor().setCurNode(
           Blockly.ASTNode.createFieldNode(field));
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(fieldSpy);
     });
 
     test('Action exists - field does not handle action', function() {
       const block = this.workspace.getTopBlocks()[0];
       const field = block.inputList[0].fieldRow[0];
-      const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.A, '');
+      const gamepadCombination = GamepadCombination.LEFT_STICK_LEFT;
       const fieldSpy = sinon.spy(field, 'onShortcut');
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
       this.workspace.getCursor().setCurNode(
           Blockly.ASTNode.createFieldNode(field));
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       sinon.assert.calledOnce(fieldSpy);
     });
 
     test('Toggle Action Off', function() {
-      const mockEvent = createKeyDownEvent(
-          Blockly.utils.KeyCodes.K, '',
-          [Blockly.utils.KeyCodes.SHIFT, Blockly.utils.KeyCodes.CTRL]);
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = new GamepadCombination()
+          .addButton(GamepadButton.L1)
+          .addButton(GamepadButton.R1);
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
       accessibilityStatus.enableGamepadAccessibility(this.workspace);
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.isFalse(
           accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
     });
 
     test('Toggle Action On', function() {
-      const mockEvent = createKeyDownEvent(
-          Blockly.utils.KeyCodes.K, '',
-          [Blockly.utils.KeyCodes.SHIFT, Blockly.utils.KeyCodes.CTRL]);
-      const keyDownSpy =
-          sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+      const gamepadCombination = new GamepadCombination()
+          .addButton(GamepadButton.L1)
+          .addButton(GamepadButton.R1);
+      const onActivateSpy = sinon.spy(
+          this.gamepadShortcutRegistry, 'onActivate');
       accessibilityStatus.disableGamepadAccessibility(this.workspace);
 
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
 
-      chai.assert.isTrue(keyDownSpy.returned(true));
+      chai.assert.isTrue(onActivateSpy.returned(true));
       chai.assert.isTrue(
           accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
     });
@@ -573,6 +598,7 @@ suite('Navigation', function() {
           'helpUrl': '',
         }]);
         this.workspace = createNavigationWorkspace(this.navigation, true, true);
+        this.controller.addWorkspace(this.workspace);
 
         Blockly.mainWorkspace = this.workspace;
         this.workspace.getCursor().drawer_ = null;
@@ -581,6 +607,7 @@ suite('Navigation', function() {
       });
 
       teardown(function() {
+        this.controller.removeWorkspace(this.workspace);
         this.workspace.dispose();
         sinon.restore();
         delete Blockly.Blocks['field_block'];
@@ -588,39 +615,42 @@ suite('Navigation', function() {
 
       test('Perform valid action for read only', function() {
         const astNode = Blockly.ASTNode.createBlockNode(this.fieldBlock1);
-        const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.S, '');
+        const gamepadCombination = GamepadCombination.LEFT_STICK_DOWN;
         this.workspace.getCursor().setCurNode(astNode);
-        const keyDownSpy =
-            sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+        const onActivateSpy = sinon.spy(
+            this.gamepadShortcutRegistry, 'onActivate');
 
-        Blockly.onKeyDown(mockEvent);
+        createNavigatorGetGamepadsStub(gamepadCombination);
+        this.clock.runToFrame();
 
-        chai.assert.isTrue(keyDownSpy.returned(true));
+        chai.assert.isTrue(onActivateSpy.returned(true));
       });
 
       test('Perform invalid action for read only', function() {
         const astNode = Blockly.ASTNode.createBlockNode(this.fieldBlock1);
-        const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.I, '');
+        const gamepadCombination = GamepadCombination.TRIANGLE;
         this.workspace.getCursor().setCurNode(astNode);
-        const keyDownSpy =
-            sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+        const onActivateSpy = sinon.spy(
+            this.gamepadShortcutRegistry, 'onActivate');
 
-        Blockly.onKeyDown(mockEvent);
+        createNavigatorGetGamepadsStub(gamepadCombination);
+        this.clock.runToFrame();
 
-        chai.assert.isTrue(keyDownSpy.returned(false));
+        chai.assert.isTrue(onActivateSpy.returned(false));
       });
 
       test('Try to perform action on a field', function() {
         const field = this.fieldBlock1.inputList[0].fieldRow[0];
         const astNode = Blockly.ASTNode.createFieldNode(field);
-        const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.ENTER, '');
+        const gamepadCombination = GamepadCombination.CROSS;
         this.workspace.getCursor().setCurNode(astNode);
-        const keyDownSpy =
-            sinon.spy(Blockly.ShortcutRegistry.registry, 'onKeyDown');
+        const onActivateSpy = sinon.spy(
+            this.gamepadShortcutRegistry, 'onActivate');
 
-        Blockly.onKeyDown(mockEvent);
+        createNavigatorGetGamepadsStub(gamepadCombination);
+        this.clock.runToFrame();
 
-        chai.assert.isTrue(keyDownSpy.returned(false));
+        chai.assert.isTrue(onActivateSpy.returned(false));
       });
     });
   });
@@ -641,6 +671,7 @@ suite('Navigation', function() {
       }]);
 
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
 
       const basicBlock = this.workspace.newBlock('basic_block');
       const basicBlock2 = this.workspace.newBlock('basic_block');
@@ -650,6 +681,7 @@ suite('Navigation', function() {
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -732,6 +764,7 @@ suite('Navigation', function() {
       ]);
 
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
 
       const basicBlock = this.workspace.newBlock('basic_block');
       const basicBlock2 = this.workspace.newBlock('basic_block');
@@ -763,6 +796,7 @@ suite('Navigation', function() {
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -849,12 +883,14 @@ suite('Navigation', function() {
         'nextStatement': null,
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
 
       this.basicBlockA = this.workspace.newBlock('basic_block');
       this.basicBlockB = this.workspace.newBlock('basic_block');
     });
 
     teardown(function() {
+      this.controller.removeWorkspace(this.workspace);
       this.workspace.dispose();
       sinon.restore();
       delete Blockly.Blocks['basic_block'];
@@ -867,14 +903,15 @@ suite('Navigation', function() {
       // Set the cursor to be on the child block
       this.workspace.getCursor().setCurNode(astNode);
       // Remove the child block
-      const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.DELETE, '');
+      const gamepadCombination = GamepadCombination.LEFT;
 
       // Actions that happen when a block is deleted were causing problems.
       // Since this is not what we are trying to test and does not effect the
       // feature, disable events.
       Blockly.Events.disable();
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
       Blockly.Events.enable();
+      this.clock.runToFrame();
 
       chai.assert.equal(
           this.workspace.getCursor().getCurNode().getType(),
@@ -885,14 +922,15 @@ suite('Navigation', function() {
       const astNode = Blockly.ASTNode.createBlockNode(this.basicBlockB);
       this.workspace.getCursor().setCurNode(astNode);
 
-      const mockEvent = createKeyDownEvent(Blockly.utils.KeyCodes.DELETE, '');
+      const gamepadCombination = GamepadCombination.LEFT;
 
       // Actions that happen when a block is deleted were causing problems.
       // Since this is not what we are trying to test and does not effect the
       // feature, disable events.
       Blockly.Events.disable();
-      Blockly.onKeyDown(mockEvent);
+      createNavigatorGetGamepadsStub(gamepadCombination);
       Blockly.Events.enable();
+      this.clock.runToFrame();
 
       chai.assert.equal(
           this.workspace.getCursor().getCurNode().getType(),
@@ -958,11 +996,13 @@ suite('Navigation', function() {
         'nextStatement': null,
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
       this.workspaceChangeListener = this.navigation.wsChangeWrapper;
       this.basicBlockA = this.workspace.newBlock('basic_block');
     });
 
     teardown(function() {
+      // this.controller.removeWorkspace(this.workspace);
       delete Blockly.Blocks['basic_block'];
       sinon.restore();
     });
@@ -1062,6 +1102,7 @@ suite('Navigation', function() {
         'nextStatement': null,
       }]);
       this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
       this.flyoutChangeListener = this.navigation.flyoutChangeWrapper;
       this.basicBlockA = this.workspace.newBlock('basic_block');
 
@@ -1070,6 +1111,7 @@ suite('Navigation', function() {
     });
 
     teardown(function() {
+      // this.controller.removeWorkspace(this.workspace);
       delete Blockly.Blocks['basic_block'];
       sinon.restore();
     });
