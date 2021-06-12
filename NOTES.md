@@ -39,7 +39,11 @@ are registered directly in the `NavigationController`. This makes the
 `NavigationController` quite long, and hard to test. Let's move all the
 shortcuts out into their own classes with a clean interface.
 
-## ~~Test updates~~ DONE!
+## ~~Make tests pass~~ DONE!
+
+Make any code changes necessary to get tests to pass.
+
+## ~~Unit test presubmit check~~ DONE!
 
 All unit tests also need to be updated to account for changes moving forward. To
 ensure that the tests are passing moving forward, I will add the tests as a

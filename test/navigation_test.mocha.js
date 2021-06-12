@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2020 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 'use strict';
 
 
@@ -5,7 +11,6 @@ import chai from 'chai';
 import sinon from 'sinon';
 import FakeTimers from '@sinonjs/fake-timers';
 
-// const Blockly = require('blockly/node');
 import Blockly from 'blockly';
 import {NavigationController, Navigation, GamepadMonitor, Constants}
   from '../src/index';

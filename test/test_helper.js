@@ -1,4 +1,9 @@
-// const Blockly = require('blockly/node');
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import Blockly from 'blockly';
 import sinon from 'sinon';
 import {GamepadCombination} from '../src/gamepad';

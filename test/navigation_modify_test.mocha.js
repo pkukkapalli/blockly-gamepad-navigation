@@ -5,7 +5,6 @@
  */
 
 import chai from 'chai';
-// const Blockly = require('blockly/node');
 import Blockly from 'blockly';
 import {Navigation} from '../src/navigation';
 import {testHelpers} from '@blockly/dev-tools';
