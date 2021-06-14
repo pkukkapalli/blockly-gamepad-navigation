@@ -13,12 +13,14 @@ import {LineCursor, pluginInfo as LineCursorPluginInfo} from './line_cursor';
 import {Navigation} from './navigation';
 import {NavigationController} from './navigation_controller';
 import {GamepadMonitor} from './gamepad_monitor';
+import {GamepadShortcutRegistry} from './gamepad_shortcut_registry';
 
 export {
   Constants,
   FlyoutCursor,
   FlyoutCursorPluginInfo,
   GamepadMonitor,
+  GamepadShortcutRegistry,
   LineCursor,
   LineCursorPluginInfo,
   Navigation,
