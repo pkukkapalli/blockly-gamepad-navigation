@@ -4,7 +4,7 @@
 
 import Blockly from 'blockly';
 import {
-  GamepadAxis,
+  GamepadAxisType,
   GAMEPAD_AXIS_TO_INDEX,
   GAMEPAD_BUTTON_TO_INDEX,
   GamepadCombination} from './gamepad';
@@ -224,44 +224,44 @@ export class GamepadMonitor {
       }
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.LEFT_HORIZONTAL_LEFT) <
+    if (this.getAxisValue_(gamepad, GamepadAxisType.LEFT_HORIZONTAL_LEFT) <
         -this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.LEFT_HORIZONTAL_LEFT);
+      combination.addAxis(GamepadAxisType.LEFT_HORIZONTAL_LEFT);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.LEFT_HORIZONTAL_RIGHT) >
+    if (this.getAxisValue_(gamepad, GamepadAxisType.LEFT_HORIZONTAL_RIGHT) >
         this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.LEFT_HORIZONTAL_RIGHT);
+      combination.addAxis(GamepadAxisType.LEFT_HORIZONTAL_RIGHT);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.LEFT_VERTICAL_UP) <
+    if (this.getAxisValue_(gamepad, GamepadAxisType.LEFT_VERTICAL_UP) <
         -this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.LEFT_VERTICAL_UP);
+      combination.addAxis(GamepadAxisType.LEFT_VERTICAL_UP);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.LEFT_VERTICAL_DOWN) >
+    if (this.getAxisValue_(gamepad, GamepadAxisType.LEFT_VERTICAL_DOWN) >
         this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.LEFT_VERTICAL_DOWN);
+      combination.addAxis(GamepadAxisType.LEFT_VERTICAL_DOWN);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.RIGHT_HORIZONTAL_LEFT) <
+    if (this.getAxisValue_(gamepad, GamepadAxisType.RIGHT_HORIZONTAL_LEFT) <
         -this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.RIGHT_HORIZONTAL_LEFT);
+      combination.addAxis(GamepadAxisType.RIGHT_HORIZONTAL_LEFT);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.RIGHT_HORIZONTAL_RIGHT) >
+    if (this.getAxisValue_(gamepad, GamepadAxisType.RIGHT_HORIZONTAL_RIGHT) >
         this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.RIGHT_HORIZONTAL_RIGHT);
+      combination.addAxis(GamepadAxisType.RIGHT_HORIZONTAL_RIGHT);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.RIGHT_VERTICAL_UP) <
+    if (this.getAxisValue_(gamepad, GamepadAxisType.RIGHT_VERTICAL_UP) <
         -this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.RIGHT_VERTICAL_UP);
+      combination.addAxis(GamepadAxisType.RIGHT_VERTICAL_UP);
     }
 
-    if (this.getAxisValue_(gamepad, GamepadAxis.RIGHT_VERTICAL_DOWN) >
+    if (this.getAxisValue_(gamepad, GamepadAxisType.RIGHT_VERTICAL_DOWN) >
         this.axisActivationThreshold_) {
-      combination.addAxis(GamepadAxis.RIGHT_VERTICAL_DOWN);
+      combination.addAxis(GamepadAxisType.RIGHT_VERTICAL_DOWN);
     }
 
     return combination;
@@ -270,7 +270,7 @@ export class GamepadMonitor {
   /**
    * Get the value of the given axis.
    * @param {Gamepad} gamepad The gamepad to examine.
-   * @param {GamepadAxis} gamepadAxis The axis to check for.
+   * @param {GamepadAxisType} gamepadAxis The axis to check for.
    * @return {number} The value of the axis on a scale of -1 to 1.
    * @private
    */

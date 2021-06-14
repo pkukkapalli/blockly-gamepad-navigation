@@ -19,7 +19,7 @@ import {accessibilityStatus} from './accessibility_status';
 import {GamepadShortcut, GamepadShortcutRegistry} from
   './gamepad_shortcut_registry';
 import {GamepadMonitor} from './gamepad_monitor';
-import {GamepadButton, GamepadCombination} from './gamepad';
+import {GamepadButtonType, GamepadCombination} from './gamepad';
 
 /**
  * Class for registering shortcuts for gamepad navigation.
@@ -324,8 +324,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(toggleGamepadNavShortcut);
     const l1AndR1 = new GamepadCombination()
-        .addButton(GamepadButton.L1)
-        .addButton(GamepadButton.R1);
+        .addButton(GamepadButtonType.L1)
+        .addButton(GamepadButtonType.R1);
     this.gamepadShortcutRegistry.addCombinationMapping(l1AndR1,
         toggleGamepadNavShortcut.name);
   }
