@@ -6,7 +6,7 @@
  * The buttons available on a universal gamepad.
  * @enum {string}
  */
-export const GamepadButton = {
+export const GamepadButtonType = {
   CROSS: 'cross',
   CIRCLE: 'circle',
   SQUARE: 'square',
@@ -27,37 +27,37 @@ export const GamepadButton = {
 
 /**
  * All possible buttons.
- * @type {!Set<GamepadButton>}
+ * @type {!Set<GamepadButtonType>}
  */
-export const ALL_BUTTONS = new Set(Object.values(GamepadButton));
+export const ALL_BUTTONS = new Set(Object.values(GamepadButtonType));
 
 /**
- * @type {Map<GamepadButton, number>}
+ * @type {Map<GamepadButtonType, number>}
  */
 export const GAMEPAD_BUTTON_TO_INDEX = new Map([
-  [GamepadButton.CROSS, 0],
-  [GamepadButton.CIRCLE, 1],
-  [GamepadButton.SQUARE, 2],
-  [GamepadButton.TRIANGLE, 3],
-  [GamepadButton.L1, 4],
-  [GamepadButton.R1, 5],
-  [GamepadButton.L2, 6],
-  [GamepadButton.R2, 7],
-  [GamepadButton.SELECT, 8],
-  [GamepadButton.START, 9],
-  [GamepadButton.LEFT_STICK, 10],
-  [GamepadButton.RIGHT_STICK, 11],
-  [GamepadButton.UP, 12],
-  [GamepadButton.DOWN, 13],
-  [GamepadButton.LEFT, 14],
-  [GamepadButton.RIGHT, 15],
+  [GamepadButtonType.CROSS, 0],
+  [GamepadButtonType.CIRCLE, 1],
+  [GamepadButtonType.SQUARE, 2],
+  [GamepadButtonType.TRIANGLE, 3],
+  [GamepadButtonType.L1, 4],
+  [GamepadButtonType.R1, 5],
+  [GamepadButtonType.L2, 6],
+  [GamepadButtonType.R2, 7],
+  [GamepadButtonType.SELECT, 8],
+  [GamepadButtonType.START, 9],
+  [GamepadButtonType.LEFT_STICK, 10],
+  [GamepadButtonType.RIGHT_STICK, 11],
+  [GamepadButtonType.UP, 12],
+  [GamepadButtonType.DOWN, 13],
+  [GamepadButtonType.LEFT, 14],
+  [GamepadButtonType.RIGHT, 15],
 ]);
 
 /**
  * The axes available on a universal gamepad.
  * @enum {string}
  */
-export const GamepadAxis = {
+export const GamepadAxisType = {
   LEFT_HORIZONTAL_LEFT: 'left_horizontal_left',
   LEFT_HORIZONTAL_RIGHT: 'left_horizontal_right',
   LEFT_VERTICAL_UP: 'left_vertical_up',
@@ -70,22 +70,22 @@ export const GamepadAxis = {
 
 /**
  * All possible axes.
- * @type {!Set<GamepadAxis>}
+ * @type {!Set<GamepadAxisType>}
  */
-export const ALL_AXES = new Set(Object.values(GamepadAxis));
+export const ALL_AXES = new Set(Object.values(GamepadAxisType));
 
 /**
- * @type {Map<GamepadAxis, number>}
+ * @type {Map<GamepadAxisType, number>}
  */
 export const GAMEPAD_AXIS_TO_INDEX = new Map([
-  [GamepadAxis.LEFT_HORIZONTAL_LEFT, 0],
-  [GamepadAxis.LEFT_HORIZONTAL_RIGHT, 0],
-  [GamepadAxis.LEFT_VERTICAL_UP, 1],
-  [GamepadAxis.LEFT_VERTICAL_DOWN, 1],
-  [GamepadAxis.RIGHT_HORIZONTAL_LEFT, 2],
-  [GamepadAxis.RIGHT_HORIZONTAL_RIGHT, 2],
-  [GamepadAxis.RIGHT_VERTICAL_UP, 3],
-  [GamepadAxis.RIGHT_VERTICAL_DOWN, 3],
+  [GamepadAxisType.LEFT_HORIZONTAL_LEFT, 0],
+  [GamepadAxisType.LEFT_HORIZONTAL_RIGHT, 0],
+  [GamepadAxisType.LEFT_VERTICAL_UP, 1],
+  [GamepadAxisType.LEFT_VERTICAL_DOWN, 1],
+  [GamepadAxisType.RIGHT_HORIZONTAL_LEFT, 2],
+  [GamepadAxisType.RIGHT_HORIZONTAL_RIGHT, 2],
+  [GamepadAxisType.RIGHT_VERTICAL_UP, 3],
+  [GamepadAxisType.RIGHT_VERTICAL_DOWN, 3],
 ]);
 
 /**
@@ -94,13 +94,13 @@ export const GAMEPAD_AXIS_TO_INDEX = new Map([
 export class GamepadCombination {
   /**
    * Constructs a combination.
-   * @param {Set<GamepadButton|GamepadAxis>=} optCombination Optionally
+   * @param {Set<GamepadButtonType|GamepadAxisType>=} optCombination Optionally
    *     initialize the sequence with this combination of buttons and axes.
    */
   constructor(optCombination) {
     /**
      * The buttons in the order they should be pressed.
-     * @type {!Set<GamepadButton|GamepadAxis>}
+     * @type {!Set<GamepadButtonType|GamepadAxisType>}
      * @private
      */
     this.combination_ = optCombination || new Set();
@@ -127,7 +127,7 @@ export class GamepadCombination {
 
   /**
    * Create a combination from a single axis.
-   * @param {!GamepadAxis} gamepadAxis The axis to add.
+   * @param {!GamepadAxisType} gamepadAxis The axis to add.
    * @return {!GamepadCombination} The combination with just the given axis.
    * @public
    */
@@ -137,7 +137,7 @@ export class GamepadCombination {
 
   /**
    * Create a combination from a single button.
-   * @param {!GamepadButton} gamepadButton The button to add.
+   * @param {!GamepadButtonType} gamepadButton The button to add.
    * @return {!GamepadCombination} The combination with just the given button.
    * @public
    */
@@ -147,7 +147,7 @@ export class GamepadCombination {
 
   /**
    * Add a button to the combination.
-   * @param {!GamepadButton} button The button to add.
+   * @param {!GamepadButtonType} button The button to add.
    * @return {!GamepadCombination} This instance so you can chain more.
    * @public
    */
@@ -158,7 +158,7 @@ export class GamepadCombination {
 
   /**
    * Add an axis to the combination.
-   * @param {GamepadAxis} axis The axis to add.
+   * @param {GamepadAxisType} axis The axis to add.
    * @return {!GamepadCombination} This instance so you can chain more.
    * @public
    */
@@ -202,29 +202,34 @@ export class GamepadCombination {
     }
 
     const axes = [];
-    if (this.combination_.has(GamepadAxis.LEFT_HORIZONTAL_LEFT)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.LEFT_HORIZONTAL_LEFT)] = -1.0;
+    if (this.combination_.has(GamepadAxisType.LEFT_HORIZONTAL_LEFT)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(
+          GamepadAxisType.LEFT_HORIZONTAL_LEFT)]= -1.0;
     }
-    if (this.combination_.has(GamepadAxis.LEFT_HORIZONTAL_RIGHT)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.LEFT_HORIZONTAL_RIGHT)] = 1.0;
+    if (this.combination_.has(GamepadAxisType.LEFT_HORIZONTAL_RIGHT)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(
+          GamepadAxisType.LEFT_HORIZONTAL_RIGHT)] = 1.0;
     }
-    if (this.combination_.has(GamepadAxis.LEFT_VERTICAL_UP)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.LEFT_VERTICAL_UP)] = -1.0;
+    if (this.combination_.has(GamepadAxisType.LEFT_VERTICAL_UP)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxisType.LEFT_VERTICAL_UP)] = -1.0;
     }
-    if (this.combination_.has(GamepadAxis.LEFT_VERTICAL_DOWN)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.LEFT_VERTICAL_DOWN)] = 1.0;
+    if (this.combination_.has(GamepadAxisType.LEFT_VERTICAL_DOWN)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxisType.LEFT_VERTICAL_DOWN)] = 1.0;
     }
-    if (this.combination_.has(GamepadAxis.RIGHT_HORIZONTAL_LEFT)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.RIGHT_HORIZONTAL_LEFT)] = -1.0;
+    if (this.combination_.has(GamepadAxisType.RIGHT_HORIZONTAL_LEFT)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(
+          GamepadAxisType.RIGHT_HORIZONTAL_LEFT)] = -1.0;
     }
-    if (this.combination_.has(GamepadAxis.RIGHT_HORIZONTAL_RIGHT)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.RIGHT_HORIZONTAL_RIGHT)] = 1.0;
+    if (this.combination_.has(GamepadAxisType.RIGHT_HORIZONTAL_RIGHT)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(
+          GamepadAxisType.RIGHT_HORIZONTAL_RIGHT)] = 1.0;
     }
-    if (this.combination_.has(GamepadAxis.RIGHT_VERTICAL_UP)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.RIGHT_VERTICAL_UP)] = -1.0;
+    if (this.combination_.has(GamepadAxisType.RIGHT_VERTICAL_UP)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxisType.RIGHT_VERTICAL_UP)] = -1.0;
     }
-    if (this.combination_.has(GamepadAxis.RIGHT_VERTICAL_DOWN)) {
-      axes[GAMEPAD_AXIS_TO_INDEX.get(GamepadAxis.RIGHT_VERTICAL_DOWN)] = 1.0;
+    if (this.combination_.has(GamepadAxisType.RIGHT_VERTICAL_DOWN)) {
+      axes[GAMEPAD_AXIS_TO_INDEX.get(
+          GamepadAxisType.RIGHT_VERTICAL_DOWN)] = 1.0;
     }
 
     return {axes, buttons};
@@ -232,36 +237,37 @@ export class GamepadCombination {
 }
 
 GamepadCombination.LEFT_STICK_UP = GamepadCombination.fromSingleAxis(
-    GamepadAxis.LEFT_VERTICAL_UP);
+    GamepadAxisType.LEFT_VERTICAL_UP);
 GamepadCombination.LEFT_STICK_LEFT = GamepadCombination.fromSingleAxis(
-    GamepadAxis.LEFT_HORIZONTAL_LEFT);
+    GamepadAxisType.LEFT_HORIZONTAL_LEFT);
 GamepadCombination.LEFT_STICK_DOWN = GamepadCombination.fromSingleAxis(
-    GamepadAxis.LEFT_VERTICAL_DOWN);
+    GamepadAxisType.LEFT_VERTICAL_DOWN);
 GamepadCombination.LEFT_STICK_RIGHT = GamepadCombination.fromSingleAxis(
-    GamepadAxis.LEFT_HORIZONTAL_RIGHT);
+    GamepadAxisType.LEFT_HORIZONTAL_RIGHT);
 
 GamepadCombination.RIGHT_STICK_LEFT = GamepadCombination.fromSingleAxis(
-    GamepadAxis.RIGHT_HORIZONTAL_LEFT);
+    GamepadAxisType.RIGHT_HORIZONTAL_LEFT);
 GamepadCombination.RIGHT_STICK_RIGHT = GamepadCombination.fromSingleAxis(
-    GamepadAxis.RIGHT_HORIZONTAL_RIGHT);
+    GamepadAxisType.RIGHT_HORIZONTAL_RIGHT);
 GamepadCombination.RIGHT_STICK_UP = GamepadCombination.fromSingleAxis(
-    GamepadAxis.RIGHT_VERTICAL_UP);
+    GamepadAxisType.RIGHT_VERTICAL_UP);
 GamepadCombination.RIGHT_STICK_DOWN = GamepadCombination.fromSingleAxis(
-    GamepadAxis.RIGHT_VERTICAL_DOWN);
+    GamepadAxisType.RIGHT_VERTICAL_DOWN);
 
 GamepadCombination.TRIANGLE = GamepadCombination.fromSingleButton(
-    GamepadButton.TRIANGLE);
+    GamepadButtonType.TRIANGLE);
 GamepadCombination.CROSS = GamepadCombination.fromSingleButton(
-    GamepadButton.CROSS);
+    GamepadButtonType.CROSS);
 GamepadCombination.CIRCLE = GamepadCombination.fromSingleButton(
-    GamepadButton.CIRCLE);
+    GamepadButtonType.CIRCLE);
 GamepadCombination.SQUARE = GamepadCombination.fromSingleButton(
-    GamepadButton.SQUARE);
+    GamepadButtonType.SQUARE);
 
-GamepadCombination.UP = GamepadCombination.fromSingleButton(GamepadButton.UP);
+GamepadCombination.UP = GamepadCombination.fromSingleButton(
+    GamepadButtonType.UP);
 GamepadCombination.DOWN = GamepadCombination.fromSingleButton(
-    GamepadButton.DOWN);
+    GamepadButtonType.DOWN);
 GamepadCombination.LEFT = GamepadCombination.fromSingleButton(
-    GamepadButton.LEFT);
+    GamepadButtonType.LEFT);
 GamepadCombination.RIGHT = GamepadCombination.fromSingleButton(
-    GamepadButton.RIGHT);
+    GamepadButtonType.RIGHT);

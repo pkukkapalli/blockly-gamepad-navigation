@@ -22,7 +22,7 @@ import {
   connectFakeGamepad,
   disconnectFakeGamepad} from './test_helper';
 import {accessibilityStatus} from '../src/accessibility_status';
-import {GamepadCombination, GamepadButton} from '../src/gamepad';
+import {GamepadCombination, GamepadButtonType} from '../src/gamepad';
 
 suite('Navigation', function() {
   setup(function() {
@@ -496,7 +496,7 @@ suite('Navigation', function() {
       const field = block.inputList[0].fieldRow[0];
       const fieldSpy = sinon.spy(field, 'onShortcut');
       const gamepadCombination = new GamepadCombination()
-          .addButton(GamepadButton.SELECT);
+          .addButton(GamepadButtonType.SELECT);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
       this.workspace.getCursor().setCurNode(
@@ -545,8 +545,8 @@ suite('Navigation', function() {
 
     test('Toggle Action Off', function() {
       const gamepadCombination = new GamepadCombination()
-          .addButton(GamepadButton.L1)
-          .addButton(GamepadButton.R1);
+          .addButton(GamepadButtonType.L1)
+          .addButton(GamepadButtonType.R1);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
       accessibilityStatus.enableGamepadAccessibility(this.workspace);
@@ -561,8 +561,8 @@ suite('Navigation', function() {
 
     test('Toggle Action On', function() {
       const gamepadCombination = new GamepadCombination()
-          .addButton(GamepadButton.L1)
-          .addButton(GamepadButton.R1);
+          .addButton(GamepadButtonType.L1)
+          .addButton(GamepadButtonType.R1);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
       accessibilityStatus.disableGamepadAccessibility(this.workspace);

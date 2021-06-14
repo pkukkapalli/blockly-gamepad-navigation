@@ -54,9 +54,10 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   change it to be a proper instantiable class, then you can also make
   `AccessibilityStatus` a non-singleton.
 
-- [ ] **`GamepadButton` type needs a new name**: the `GamepadButton` button
+- [x] **`GamepadButton` type needs a new name**: the `GamepadButton` button
   type's name clashes with the `GamepadButton` type specified in the browser.
-  Coming up with a new name will just cut down on confusion.
+  Coming up with a new name will just cut down on confusion. **Update**: renamed
+  to `GamepadButtonType`, and renamed `GamepadAxis` to `GamepadAxisType`.
 
 - [ ] **Change `test_helper.createNavigationWorkspace` to use
   `NavigationController`**: right now, it uses `Navigation`, and enables gamepad
