@@ -10,7 +10,7 @@ import {
   GamepadCombination} from './gamepad';
 import {GamepadShortcutRegistry} from './gamepad_shortcut_registry';
 
-const DEFAULT_DELAY_BETWEEN_COMBINATIONS_MILLISECONDS = 100;
+const DEFAULT_DELAY_BETWEEN_COMBINATIONS_MILLISECONDS = 200;
 const DEFAULT_AXIS_ACTIVATION_THRESHOLD = 0.4;
 
 /**
@@ -189,11 +189,19 @@ export class GamepadMonitor {
       return;
     }
 
-    for (const gamepad of navigator.getGamepads()) {
+    let isHandled = false;
+    const gamepads = navigator.getGamepads();
+    for (const gamepadIndex of this.connectedGamepadIndexes_) {
+      const gamepad = gamepads[gamepadIndex];
       const combination = this.currentCombination_(gamepad);
       for (const workspace of this.workspaces_) {
-        this.registry_.onActivate(workspace, combination);
+        isHandled = this.registry_.onActivate(workspace, combination) ||
+            isHandled;
       }
+    }
+
+    if (isHandled) {
+      this.timeSinceLastCommandHandled_ = Math.floor(timestamp);
     }
 
     requestAnimationFrame(
