@@ -22,7 +22,8 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 
 - [ ] **Text input**: investigate best ways to input text with a game
   controller. Maybe a wheel that lets you quickly jump between letters? Suggest
-  words based on a dictionary?
+  words based on a dictionary? See [article][gamepad-text] on how to do text
+  input.
 
 ## Code health
 
@@ -82,3 +83,5 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 [ShortcutRegistry]:https://developers.google.com/blockly/reference/js/Blockly.ShortcutRegistry
 
 [prettier]:https://prettier.io/
+
+[gamepad-text]:https://www.gamasutra.com/blogs/CharlieDeck/20170721/301392/Towards_Better_Gamepad_Text_Input.php
