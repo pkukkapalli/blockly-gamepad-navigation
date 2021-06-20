@@ -21,6 +21,35 @@ import {GamepadShortcut, GamepadShortcutRegistry} from
 import {GamepadMonitor} from './gamepad_monitor';
 import {GamepadButtonType, GamepadCombination} from './gamepad';
 
+const l1AndR1 = new GamepadCombination()
+    .addButton(GamepadButtonType.L1)
+    .addButton(GamepadButtonType.R1);
+
+const DEFAULT_CONTROLS = new Map([
+  [Constants.SHORTCUT_NAMES.PREVIOUS, GamepadCombination.LEFT_STICK_UP],
+  [Constants.SHORTCUT_NAMES.NEXT, GamepadCombination.LEFT_STICK_DOWN],
+  [Constants.SHORTCUT_NAMES.IN, GamepadCombination.LEFT_STICK_RIGHT],
+  [Constants.SHORTCUT_NAMES.OUT, GamepadCombination.LEFT_STICK_LEFT],
+  [Constants.SHORTCUT_NAMES.DISCONNECT, GamepadCombination.CIRCLE],
+  [Constants.SHORTCUT_NAMES.EXIT, GamepadCombination.CIRCLE],
+  [Constants.SHORTCUT_NAMES.INSERT, GamepadCombination.TRIANGLE],
+  [Constants.SHORTCUT_NAMES.MARK, GamepadCombination.CROSS],
+  [Constants.SHORTCUT_NAMES.TOOLBOX, GamepadCombination.SQUARE],
+  [Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV, l1AndR1],
+  [Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN,
+    GamepadCombination.RIGHT_STICK_DOWN],
+  [Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT,
+    GamepadCombination.RIGHT_STICK_LEFT],
+  [Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP,
+    GamepadCombination.RIGHT_STICK_UP],
+  [Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT,
+    GamepadCombination.RIGHT_STICK_RIGHT],
+  [Constants.SHORTCUT_NAMES.COPY, GamepadCombination.UP],
+  [Constants.SHORTCUT_NAMES.PASTE, GamepadCombination.DOWN],
+  [Constants.SHORTCUT_NAMES.CUT, GamepadCombination.RIGHT],
+  [Constants.SHORTCUT_NAMES.DELETE, GamepadCombination.LEFT],
+]);
+
 /**
  * Class for registering shortcuts for gamepad navigation.
  */
@@ -35,8 +64,13 @@ export class NavigationController {
    *     registry to use.
    * @param {!GamepadMonitor=} optGamepadMonitor The gamepad monitor to use for
    *     getting input from the gamepad.
+   * @param {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>=} optControls A
+   *     custom control configuration for the plugin.
    */
-  constructor(optNavigation, optGamepadShortcutRegistry, optGamepadMonitor) {
+  constructor(optNavigation,
+      optGamepadShortcutRegistry,
+      optGamepadMonitor,
+      optControls) {
     /**
      * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
@@ -59,6 +93,13 @@ export class NavigationController {
      */
     this.gamepadMonitor = optGamepadMonitor ||
         new GamepadMonitor(this.gamepadShortcutRegistry);
+
+    /**
+     * The control configuration for each action.
+     * @type {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>}
+     * @private
+     */
+    this.controls_ = optControls || DEFAULT_CONTROLS;
   }
 
   /**
@@ -301,7 +342,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(previousShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.LEFT_STICK_UP, previousShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.PREVIOUS),
+        previousShortcut.name);
   }
 
   /**
@@ -323,10 +365,8 @@ export class NavigationController {
     };
 
     this.gamepadShortcutRegistry.register(toggleGamepadNavShortcut);
-    const l1AndR1 = new GamepadCombination()
-        .addButton(GamepadButtonType.L1)
-        .addButton(GamepadButtonType.R1);
-    this.gamepadShortcutRegistry.addCombinationMapping(l1AndR1,
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls_.get(Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV),
         toggleGamepadNavShortcut.name);
   }
 
@@ -368,7 +408,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(outShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.LEFT_STICK_LEFT, outShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.OUT), outShortcut.name);
   }
 
   /**
@@ -414,7 +454,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(nextShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.LEFT_STICK_DOWN, nextShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.NEXT), nextShortcut.name);
   }
 
   /**
@@ -456,7 +496,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(inShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.LEFT_STICK_RIGHT, inShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.IN), inShortcut.name);
   }
 
   /**
@@ -484,7 +524,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(insertShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.TRIANGLE, insertShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.INSERT),
+        insertShortcut.name);
   }
 
   /**
@@ -515,7 +556,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(markShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.CROSS, markShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.MARK), markShortcut.name);
   }
 
   /**
@@ -544,7 +585,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(disconnectShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.CIRCLE, disconnectShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.DISCONNECT),
+        disconnectShortcut.name);
   }
 
   /**
@@ -577,7 +619,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(focusToolboxShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.SQUARE, focusToolboxShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.TOOLBOX),
+        focusToolboxShortcut.name);
   }
 
   /**
@@ -609,7 +652,7 @@ export class NavigationController {
     this.gamepadShortcutRegistry.register(
         exitShortcut, /* optAllowOverrides= */ true);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.CIRCLE, exitShortcut.name,
+        this.controls_.get(Constants.SHORTCUT_NAMES.EXIT), exitShortcut.name,
         /* optAllowCollision= */ true);
   }
 
@@ -633,7 +676,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveLeftShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.RIGHT_STICK_LEFT, wsMoveLeftShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT),
+        wsMoveLeftShortcut.name);
   }
 
   /**
@@ -656,7 +700,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveRightShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.RIGHT_STICK_RIGHT, wsMoveRightShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT),
+        wsMoveRightShortcut.name);
   }
 
   /**
@@ -679,7 +724,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveUpShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.RIGHT_STICK_UP, wsMoveUpShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP),
+        wsMoveUpShortcut.name);
   }
 
   /**
@@ -702,7 +748,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveDownShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.RIGHT_STICK_DOWN, wsMoveDownShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN),
+        wsMoveDownShortcut.name);
   }
 
   /**
@@ -734,7 +781,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(copyShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.UP, copyShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.COPY), copyShortcut.name);
   }
 
   /**
@@ -756,7 +803,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(pasteShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.DOWN, pasteShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.PASTE), pasteShortcut.name);
   }
 
   /**
@@ -791,7 +838,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(cutShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.RIGHT, cutShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.CUT), cutShortcut.name);
   }
 
   /**
@@ -827,7 +874,8 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(deleteShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        GamepadCombination.LEFT, deleteShortcut.name);
+        this.controls_.get(Constants.SHORTCUT_NAMES.DELETE),
+        deleteShortcut.name);
   }
 
   /**
