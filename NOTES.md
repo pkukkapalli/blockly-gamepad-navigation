@@ -15,15 +15,22 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   `keyboardAccessibilityMode` field throughout the project.
 
 - [ ] **Documentation of controls**: right now, the commands are undocumented.
-  Ideally, you could overlay the commands on an image of a gamepad.
+  Ideally, you could overlay the commands on an image of a gamepad. These
+  should be auto-generated based on the controls configured by the plugin user.
 
-- [ ] **Customizable controls**: the controls should be customizable so the user
+- [x] **Customizable controls**: the controls should be customizable so the user
   can optimize their workflow.
+
+- [ ] **Add state to control configuration**: currently the configuration is
+  just a mapping between shortcuts and gamepad combinations.
 
 - [ ] **Text input**: investigate best ways to input text with a game
   controller. Maybe a wheel that lets you quickly jump between letters? Suggest
   words based on a dictionary? See [article][gamepad-text] on how to do text
   input.
+
+- [ ] **Update plugin documentation**: the documentation is a bit stale and
+  incomplete.
 
 ## Code health
 
