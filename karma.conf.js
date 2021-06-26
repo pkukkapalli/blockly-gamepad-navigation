@@ -10,6 +10,7 @@ module.exports = function(config) {
       'karma-mocha',
       'karma-chai',
       'karma-chrome-launcher',
+      'karma-mocha-reporter',
     ],
     preprocessors: {
       'test/**/*.mocha.js': ['webpack'],
@@ -18,7 +19,7 @@ module.exports = function(config) {
       pattern: 'test/**/*.mocha.js',
       type: 'module',
     }],
-    reporters: ['progress'],
+    reporters: ['mocha'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
@@ -36,7 +37,11 @@ module.exports = function(config) {
     client: {
       mocha: {
         ui: 'tdd',
+        inlineDiffs: true,
       },
+    },
+    mochaReporter: {
+      showDiff: true,
     },
   });
 };

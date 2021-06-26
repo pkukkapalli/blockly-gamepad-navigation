@@ -8,28 +8,33 @@
 
 
 import chai from 'chai';
+import chaiDom from 'chai-dom';
 import sinon from 'sinon';
 import FakeTimers from '@sinonjs/fake-timers';
 
 import Blockly from 'blockly';
-import {NavigationController, Navigation, GamepadMonitor, Constants}
+import {NavigationController, Navigation,
+  GamepadMonitor, Constants, DEFAULT_CONTROLS}
   from '../src/index';
 import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
 import {
   createNavigationWorkspace,
   createNavigatorGetGamepadsStub,
-  createBlocklyDiv,
+  createDiv,
   connectFakeGamepad,
   disconnectFakeGamepad} from './test_helper';
 import {accessibilityStatus} from '../src/accessibility_status';
 import {GamepadCombination, GamepadButtonType} from '../src/gamepad';
+
+chai.use(chaiDom);
 
 suite('Navigation', function() {
   setup(function() {
     /** @type {FakeTimers.Clock} */
     this.clock = FakeTimers.install();
 
-    createBlocklyDiv('blocklyDiv');
+    createDiv('blocklyDiv');
+    createDiv('helpText');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };
@@ -45,7 +50,8 @@ suite('Navigation', function() {
 
     /** @type {NavigationController} */
     this.controller = new NavigationController(
-        this.navigation, this.gamepadShortcutRegistry, this.gamepadMonitor);
+        this.navigation, this.gamepadShortcutRegistry, this.gamepadMonitor,
+        DEFAULT_CONTROLS, 'helpText');
     this.controller.init();
 
     connectFakeGamepad();
@@ -54,7 +60,6 @@ suite('Navigation', function() {
   teardown(function() {
     disconnectFakeGamepad();
     this.controller.dispose();
-
     this.clock.uninstall();
   });
 
@@ -496,7 +501,7 @@ suite('Navigation', function() {
       const field = block.inputList[0].fieldRow[0];
       const fieldSpy = sinon.spy(field, 'onShortcut');
       const gamepadCombination = new GamepadCombination()
-          .addButton(GamepadButtonType.SELECT);
+          .addButton(GamepadButtonType.LEFT_STICK);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
       this.workspace.getCursor().setCurNode(
@@ -1188,6 +1193,52 @@ suite('Navigation', function() {
       chai.assert.equal(this.workspace.listeners_.length, numListeners - 1);
       chai.assert.equal(
           flyout.getWorkspace().listeners_.length, numFlyoutListeners - 1);
+    });
+  });
+
+  suite('Help text', function() {
+    setup(function() {
+      this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
+    });
+
+    teardown(function() {
+      sinon.restore();
+    });
+
+    test('Default controls are shown when activated', function() {
+      const gamepadCombination = GamepadCombination.SELECT;
+
+      createNavigatorGetGamepadsStub(gamepadCombination);
+      this.clock.runToFrame();
+
+      const instructions = document.querySelector('#helpText').innerText
+          .split('\n');
+      chai.assert.sameDeepOrderedMembers(instructions, [
+        'Navigation',
+        'Move to previous node: Left stick up',
+        'Move to next node: Left stick down',
+        'Move into block: Left stick right',
+        'Move out of block: Left stick left',
+        'Block manipulation',
+        'Disconnect two nodes: Circle',
+        'Insert a block: Triangle',
+        'Mark a block: Cross',
+        'Copy node: D-pad up',
+        'Paste node: D-pad down',
+        'Cut node: D-pad right',
+        'Delete node: D-pad left',
+        'Workspace movement',
+        'Move workspace left: Right stick left',
+        'Move workspace right: Right stick right',
+        'Move workspace up: Right stick up',
+        'Move workspace down: Right stick down',
+        'Other',
+        'Toggle toolbox: Square',
+        'Exit: Circle',
+        'Toggle gamepad navigation: L1 + R1',
+        'Toggle the help screen: Select',
+      ]);
     });
   });
 });

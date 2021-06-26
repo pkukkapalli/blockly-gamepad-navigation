@@ -46,7 +46,36 @@ export const SHORTCUT_NAMES = {
   MOVE_WS_CURSOR_DOWN: 'workspace_down',
   MOVE_WS_CURSOR_LEFT: 'workspace_left',
   MOVE_WS_CURSOR_RIGHT: 'workspace_right',
+  TOGGLE_HELP: 'help',
 };
+
+/**
+ * Mapping between shortcuts and their display names.
+ * @type {Map<SHORTCUT_NAMES, string>}
+ * @const
+ * @public
+ */
+export const SHORTCUT_DISPLAY_NAMES = new Map([
+  [SHORTCUT_NAMES.PREVIOUS, 'Move to previous node'],
+  [SHORTCUT_NAMES.NEXT, 'Move to next node'],
+  [SHORTCUT_NAMES.IN, 'Move into block'],
+  [SHORTCUT_NAMES.OUT, 'Move out of block'],
+  [SHORTCUT_NAMES.INSERT, 'Insert a block'],
+  [SHORTCUT_NAMES.MARK, 'Mark a block'],
+  [SHORTCUT_NAMES.DISCONNECT, 'Disconnect two nodes'],
+  [SHORTCUT_NAMES.TOOLBOX, 'Toggle toolbox'],
+  [SHORTCUT_NAMES.EXIT, 'Exit'],
+  [SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV, 'Toggle gamepad navigation'],
+  [SHORTCUT_NAMES.COPY, 'Copy node'],
+  [SHORTCUT_NAMES.CUT, 'Cut node'],
+  [SHORTCUT_NAMES.PASTE, 'Paste node'],
+  [SHORTCUT_NAMES.DELETE, 'Delete node'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_UP, 'Move workspace up'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN, 'Move workspace down'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT, 'Move workspace left'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT, 'Move workspace right'],
+  [SHORTCUT_NAMES.TOGGLE_HELP, 'Toggle the help screen'],
+]);
 
 /**
  * Types of possible messages passed into the loggingCallback in the Navigation

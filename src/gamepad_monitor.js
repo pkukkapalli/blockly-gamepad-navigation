@@ -165,8 +165,6 @@ export class GamepadMonitor {
 
   /**
    * Handle input from the gamepad during an animation frame.
-   * TODO(pkukkapalli): change to wait for the button to be held a certain
-   * amount of time, instead of delaying between inputs?
    * @param {number} timestamp The timestamp of this animation frame.
    * @private
    */
@@ -183,7 +181,7 @@ export class GamepadMonitor {
 
     const elapsedTime =
         Math.floor(timestamp) - this.timeSinceLastCommandHandled_;
-    if (elapsedTime <= DEFAULT_DELAY_BETWEEN_COMBINATIONS_MILLISECONDS) {
+    if (elapsedTime <= this.delayBetweenCombinations_) {
       requestAnimationFrame(
           (timestamp) => this.handleAnimationFrame_(timestamp));
       return;

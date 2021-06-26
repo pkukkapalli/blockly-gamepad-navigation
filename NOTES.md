@@ -14,15 +14,21 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   singleton `AccessibilityStatus` class that holds this info, and replaces the
   `keyboardAccessibilityMode` field throughout the project.
 
-- [ ] **Documentation of controls**: right now, the commands are undocumented.
+- [x] **Documentation of controls**: right now, the commands are undocumented.
   Ideally, you could overlay the commands on an image of a gamepad. These
   should be auto-generated based on the controls configured by the plugin user.
 
 - [x] **Customizable controls**: the controls should be customizable so the user
   can optimize their workflow.
 
-- [ ] **Add state to control configuration**: currently the configuration is
+- [x] **Add state to control configuration**: currently the configuration is
   just a mapping between shortcuts and gamepad combinations.
+
+- [ ] **Scroll workspace**: right now you cannot scroll the workspace easily. R2
+  and the right stick should be a good solution.
+
+- [ ] **Better help widget**: the help widget should hover over the screen when
+  opened, and also have a diagram of the controller.
 
 - [ ] **Text input**: investigate best ways to input text with a game
   controller. Maybe a wheel that lets you quickly jump between letters? Suggest
@@ -31,6 +37,19 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 
 - [ ] **Update plugin documentation**: the documentation is a bit stale and
   incomplete.
+
+- [ ] **i18n**: help text should be internationalized to the user's locale.
+
+- [ ] **Detect controller**: help text should be updated according to the
+  gamepad being used.
+
+- [ ] **Better test app**: the test app is quite clunky. The instructions on the
+  top take up quite a lot of space, and it also uses a lot of horizontal space,
+  which can make using the Chrome developer tools cumbersome.
+
+- [ ] **Better navigation controls**: the default controls migrated from the
+  keyboard navigation plugin are quite cumbersome to use, and not very
+  intuitive.
 
 ## Code health
 
@@ -84,6 +103,10 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 
 - [ ] **Auto-formatting**: add [prettier][prettier] to the project so that code
   is automatically formatted.
+
+- [ ] **Optional parameters**: the optional parameters for
+  `NavigationController` are all positional right now. It would be better if
+  they were packed into an object.
 
 [keyboardAccessibilityMode]:https://developers.google.com/blockly/reference/js/Blockly.WorkspaceSvg#keyboardAccessibilityMode
 
