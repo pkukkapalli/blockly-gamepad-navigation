@@ -14,7 +14,7 @@ import * as Constants from '../src/constants';
  * Appends a div with the given ID to the document body.
  * @param {string} id The ID to assign to the element.
  */
-export function createBlocklyDiv(id) {
+export function createDiv(id) {
   if (document.getElementById(id)) {
     return;
   }

@@ -25,7 +25,7 @@ const l1AndR1 = new GamepadCombination()
     .addButton(GamepadButtonType.L1)
     .addButton(GamepadButtonType.R1);
 
-const DEFAULT_CONTROLS = new Map([
+export const DEFAULT_CONTROLS = new Map([
   [Constants.SHORTCUT_NAMES.PREVIOUS, GamepadCombination.LEFT_STICK_UP],
   [Constants.SHORTCUT_NAMES.NEXT, GamepadCombination.LEFT_STICK_DOWN],
   [Constants.SHORTCUT_NAMES.IN, GamepadCombination.LEFT_STICK_RIGHT],
@@ -48,6 +48,7 @@ const DEFAULT_CONTROLS = new Map([
   [Constants.SHORTCUT_NAMES.PASTE, GamepadCombination.DOWN],
   [Constants.SHORTCUT_NAMES.CUT, GamepadCombination.RIGHT],
   [Constants.SHORTCUT_NAMES.DELETE, GamepadCombination.LEFT],
+  [Constants.SHORTCUT_NAMES.TOGGLE_HELP, GamepadCombination.SELECT],
 ]);
 
 /**
@@ -66,11 +67,14 @@ export class NavigationController {
    *     getting input from the gamepad.
    * @param {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>=} optControls A
    *     custom control configuration for the plugin.
+   * @param {!HTMLElement=} optHelpContainerId The ID of an HTML element that
+   *     can hold help text to show the user how to use the plugin.
    */
   constructor(optNavigation,
       optGamepadShortcutRegistry,
       optGamepadMonitor,
-      optControls) {
+      optControls,
+      optHelpContainerId) {
     /**
      * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
@@ -97,9 +101,23 @@ export class NavigationController {
     /**
      * The control configuration for each action.
      * @type {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>}
-     * @private
+     * @protected
      */
-    this.controls_ = optControls || DEFAULT_CONTROLS;
+    this.controls = optControls || DEFAULT_CONTROLS;
+
+    /**
+     * Where to display the help text for the current configuration if at all.
+     * @type {string|undefined}
+     * @protected
+     */
+    this.helpContainerId = optHelpContainerId;
+
+    /**
+     * Whether or not the help container is shown.
+     * @type {boolean}
+     * @protected
+     */
+    this.isHelpVisible = false;
   }
 
   /**
@@ -110,6 +128,8 @@ export class NavigationController {
     this.addShortcutHandlers();
     this.registerDefaults();
     this.gamepadMonitor.init();
+    this.initializeHelpContainer();
+    this.updateHelpContainer();
   }
 
   /**
@@ -300,6 +320,112 @@ export class NavigationController {
   }
 
   /**
+   * Gets the element that can contain the help text, if it exists.
+   * @return {HTMLElement|undefined} The element if found.
+   * @protected
+   */
+  getHelpContainer() {
+    if (!this.helpContainerId) return;
+    return document.getElementById(this.helpContainerId);
+  }
+
+  /**
+   * Adds the help text to the help container.
+   * @protected
+   */
+  initializeHelpContainer() {
+    const helpContainer = this.getHelpContainer();
+    if (!helpContainer) return;
+
+    helpContainer.innerHTML = `
+      <h1>Navigation</h1>
+      <ul>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.PREVIOUS)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.NEXT)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.IN)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.OUT)}</li>
+      </ul>
+
+      <h1>Block manipulation</h1>
+      <ul>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.DISCONNECT)}
+        </li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.INSERT)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.MARK)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.COPY)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.PASTE)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.CUT)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.DELETE)}</li>
+      </ul>
+
+      <h1>Workspace movement</h1>
+      <ul>
+        <li>
+          ${this.helpTextForShortcut(
+      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(
+      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(
+      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(
+      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN)}
+        </li>
+      </ul>
+
+      <h1>Other</h1>
+      <ul>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.TOOLBOX)}</li>
+        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.EXIT)}</li>
+        <li>
+          ${this.helpTextForShortcut(
+      Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.TOGGLE_HELP)}
+        </li>
+      </ul>
+    `;
+  }
+
+  /**
+   * Renders the help text for activating the given shortcut.
+   * @param {Constants.SHORTCUT_NAMES} shortcutName The name of the shortcut to
+   *     render help text for.
+   * @return {string} The help text.
+   */
+  helpTextForShortcut(shortcutName) {
+    const shortcutDisplayName =
+        Constants.SHORTCUT_DISPLAY_NAMES.get(shortcutName);
+    const combinationText = this.controls.get(shortcutName).displayText();
+    return `<b>${shortcutDisplayName}:</b> ${combinationText}`;
+  }
+
+  /**
+   * Renders the help container if it is visible, and hides it otherwise.
+   * @return {boolean} True if the container was updated, false otherwise.
+   * @protected
+   */
+  updateHelpContainer() {
+    const helpContainer = this.getHelpContainer();
+    if (!helpContainer) return false;
+
+    if (this.isHelpVisible) {
+      helpContainer.style.visibility = 'visible';
+    } else {
+      helpContainer.style.visibility = 'hidden';
+    }
+
+    return true;
+  }
+
+  /**
    * Gampead shortcut to go to the previous location when in gamepad
    * navigation mode.
    * @protected
@@ -342,7 +468,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(previousShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.PREVIOUS),
+        this.controls.get(Constants.SHORTCUT_NAMES.PREVIOUS),
         previousShortcut.name);
   }
 
@@ -366,7 +492,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(toggleGamepadNavShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV),
+        this.controls.get(Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV),
         toggleGamepadNavShortcut.name);
   }
 
@@ -408,7 +534,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(outShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.OUT), outShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.OUT), outShortcut.name);
   }
 
   /**
@@ -454,7 +580,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(nextShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.NEXT), nextShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.NEXT), nextShortcut.name);
   }
 
   /**
@@ -496,7 +622,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(inShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.IN), inShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.IN), inShortcut.name);
   }
 
   /**
@@ -524,7 +650,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(insertShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.INSERT),
+        this.controls.get(Constants.SHORTCUT_NAMES.INSERT),
         insertShortcut.name);
   }
 
@@ -556,7 +682,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(markShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.MARK), markShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.MARK), markShortcut.name);
   }
 
   /**
@@ -585,7 +711,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(disconnectShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.DISCONNECT),
+        this.controls.get(Constants.SHORTCUT_NAMES.DISCONNECT),
         disconnectShortcut.name);
   }
 
@@ -619,7 +745,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(focusToolboxShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.TOOLBOX),
+        this.controls.get(Constants.SHORTCUT_NAMES.TOOLBOX),
         focusToolboxShortcut.name);
   }
 
@@ -652,7 +778,7 @@ export class NavigationController {
     this.gamepadShortcutRegistry.register(
         exitShortcut, /* optAllowOverrides= */ true);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.EXIT), exitShortcut.name,
+        this.controls.get(Constants.SHORTCUT_NAMES.EXIT), exitShortcut.name,
         /* optAllowCollision= */ true);
   }
 
@@ -676,7 +802,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveLeftShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT),
+        this.controls.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT),
         wsMoveLeftShortcut.name);
   }
 
@@ -700,7 +826,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveRightShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT),
+        this.controls.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT),
         wsMoveRightShortcut.name);
   }
 
@@ -724,7 +850,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveUpShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP),
+        this.controls.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP),
         wsMoveUpShortcut.name);
   }
 
@@ -748,7 +874,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(wsMoveDownShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN),
+        this.controls.get(Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN),
         wsMoveDownShortcut.name);
   }
 
@@ -757,7 +883,7 @@ export class NavigationController {
    * @protected
    */
   registerCopy() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const copyShortcut = {
       name: Constants.SHORTCUT_NAMES.COPY,
       preconditionFn: (workspace) => {
@@ -781,7 +907,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(copyShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.COPY), copyShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.COPY), copyShortcut.name);
   }
 
   /**
@@ -789,7 +915,7 @@ export class NavigationController {
    * @protected
    */
   registerPaste() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const pasteShortcut = {
       name: Constants.SHORTCUT_NAMES.PASTE,
       preconditionFn: (workspace) => {
@@ -803,7 +929,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(pasteShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.PASTE), pasteShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.PASTE), pasteShortcut.name);
   }
 
   /**
@@ -811,7 +937,7 @@ export class NavigationController {
    * @protected
    */
   registerCut() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const cutShortcut = {
       name: Constants.SHORTCUT_NAMES.CUT,
       preconditionFn: (workspace) => {
@@ -838,7 +964,7 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(cutShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.CUT), cutShortcut.name);
+        this.controls.get(Constants.SHORTCUT_NAMES.CUT), cutShortcut.name);
   }
 
   /**
@@ -846,7 +972,7 @@ export class NavigationController {
    * @protected
    */
   registerDelete() {
-    /** @type {!Blockly.ShortcutRegistry.KeyboardShortcut} */
+    /** @type {!GamepadShortcut} */
     const deleteShortcut = {
       name: Constants.SHORTCUT_NAMES.DELETE,
       preconditionFn: function(workspace) {
@@ -874,8 +1000,32 @@ export class NavigationController {
 
     this.gamepadShortcutRegistry.register(deleteShortcut);
     this.gamepadShortcutRegistry.addCombinationMapping(
-        this.controls_.get(Constants.SHORTCUT_NAMES.DELETE),
+        this.controls.get(Constants.SHORTCUT_NAMES.DELETE),
         deleteShortcut.name);
+  }
+
+  /**
+   * Registers shortcut to show help dialog.
+   * @protected
+   */
+  registerToggleHelp() {
+    /** @type {!GamepadShortcut} */
+    const toggleHelpShortcut = {
+      name: Constants.SHORTCUT_NAMES.TOGGLE_HELP,
+      preconditionFn: () => {
+        const helpContainer = this.getHelpContainer();
+        return !!helpContainer;
+      },
+      callback: () => {
+        this.isHelpVisible = !this.isHelpVisible;
+        return this.updateHelpContainer();
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(toggleHelpShortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(Constants.SHORTCUT_NAMES.TOGGLE_HELP),
+        toggleHelpShortcut.name);
   }
 
   /**
@@ -905,6 +1055,8 @@ export class NavigationController {
     this.registerPaste();
     this.registerCut();
     this.registerDelete();
+
+    this.registerToggleHelp();
   }
 
   /**

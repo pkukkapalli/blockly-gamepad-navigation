@@ -8,7 +8,7 @@ import chai from 'chai';
 import Blockly from 'blockly';
 import {Navigation} from '../src/navigation';
 import {testHelpers} from '@blockly/dev-tools';
-import {createBlocklyDiv} from './test_helper';
+import {createDiv} from './test_helper';
 
 const assert = chai.assert;
 const {captureWarnings} = testHelpers;
@@ -73,7 +73,7 @@ suite('Insert/Modify', function() {
   }
 
   setup(function() {
-    createBlocklyDiv('blocklyDiv');
+    createDiv('blocklyDiv');
     // NOTE: block positions chosen such that they aren't unintentionally
     // bumped out of bounds during tests.
     const xmlText = `<xml xmlns="https://developers.google.com/blockly/xml">

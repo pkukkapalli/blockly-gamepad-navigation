@@ -15,7 +15,7 @@ import {NavigationController, Navigation, GamepadMonitor}
   from '../src/index';
 import {
   connectFakeGamepad,
-  createBlocklyDiv,
+  createDiv,
   createNavigationWorkspace,
   createNavigatorGetGamepadsStub,
   disconnectFakeGamepad}
@@ -112,7 +112,7 @@ suite('Shortcut Tests', function() {
     /** @type {FakeTimers.Clock} */
     this.clock = FakeTimers.install();
 
-    createBlocklyDiv('blocklyDiv');
+    createDiv('blocklyDiv');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };

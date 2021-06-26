@@ -89,6 +89,36 @@ export const GAMEPAD_AXIS_TO_INDEX = new Map([
 ]);
 
 /**
+ * @type {Map<GamepadButtonType|GamepadAxisType,string>}
+ */
+const BUTTON_AND_AXIS_DISPLAY_NAMES = new Map([
+  [GamepadButtonType.CROSS, 'Cross'],
+  [GamepadButtonType.CIRCLE, 'Circle'],
+  [GamepadButtonType.SQUARE, 'Square'],
+  [GamepadButtonType.TRIANGLE, 'Triangle'],
+  [GamepadButtonType.L1, 'L1'],
+  [GamepadButtonType.R1, 'R1'],
+  [GamepadButtonType.L2, 'L2'],
+  [GamepadButtonType.R2, 'R2'],
+  [GamepadButtonType.SELECT, 'Select'],
+  [GamepadButtonType.START, 'Start'],
+  [GamepadButtonType.LEFT_STICK, 'Press left stick'],
+  [GamepadButtonType.RIGHT_STICK, 'Press right stick'],
+  [GamepadButtonType.UP, 'D-pad up'],
+  [GamepadButtonType.DOWN, 'D-pad down'],
+  [GamepadButtonType.LEFT, 'D-pad left'],
+  [GamepadButtonType.RIGHT, 'D-pad right'],
+  [GamepadAxisType.LEFT_HORIZONTAL_LEFT, 'Left stick left'],
+  [GamepadAxisType.LEFT_HORIZONTAL_RIGHT, 'Left stick right'],
+  [GamepadAxisType.LEFT_VERTICAL_UP, 'Left stick up'],
+  [GamepadAxisType.LEFT_VERTICAL_DOWN, 'Left stick down'],
+  [GamepadAxisType.RIGHT_HORIZONTAL_LEFT, 'Right stick left'],
+  [GamepadAxisType.RIGHT_HORIZONTAL_RIGHT, 'Right stick right'],
+  [GamepadAxisType.RIGHT_VERTICAL_UP, 'Right stick up'],
+  [GamepadAxisType.RIGHT_VERTICAL_DOWN, 'Right stick down'],
+]);
+
+/**
  * Defines a combination of buttons or axes used to trigger an action.
  */
 export class GamepadCombination {
@@ -174,6 +204,18 @@ export class GamepadCombination {
    */
   serialize() {
     return Array.from(this.combination_).sort().join('+');
+  }
+
+  /**
+   * Gets the display text of this combination, which can be used for rendering
+   * help text.
+   * @return {string} The display text.
+   * @public
+   */
+  displayText() {
+    return Array.from(this.combination_)
+        .map((axisOrButton) => BUTTON_AND_AXIS_DISPLAY_NAMES.get(axisOrButton))
+        .join(' + ');
   }
 
   /**
@@ -271,3 +313,6 @@ GamepadCombination.LEFT = GamepadCombination.fromSingleButton(
     GamepadButtonType.LEFT);
 GamepadCombination.RIGHT = GamepadCombination.fromSingleButton(
     GamepadButtonType.RIGHT);
+
+GamepadCombination.SELECT = GamepadCombination.fromSingleButton(
+    GamepadButtonType.SELECT);

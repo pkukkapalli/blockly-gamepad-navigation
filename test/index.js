@@ -16,7 +16,8 @@ import {
   NavigationController,
   GamepadShortcutRegistry,
   GamepadMonitor,
-  Navigation} from '../src';
+  Navigation,
+  DEFAULT_CONTROLS} from '../src';
 
 
 let controller;
@@ -38,7 +39,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const gamepadMonitor = new GamepadMonitor(gamepadShortcutRegistry);
   const navigation = new Navigation();
   controller = new NavigationController(
-      navigation, gamepadShortcutRegistry, gamepadMonitor);
+      navigation,
+      gamepadShortcutRegistry,
+      gamepadMonitor,
+      DEFAULT_CONTROLS,
+      'help');
   controller.init();
   const defaultOptions = {
     toolbox: toolboxCategories,
