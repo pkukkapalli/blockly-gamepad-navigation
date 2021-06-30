@@ -24,8 +24,14 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 - [x] **Add state to control configuration**: currently the configuration is
   just a mapping between shortcuts and gamepad combinations.
 
-- [ ] **Scroll workspace**: right now you cannot scroll the workspace easily. R2
+- [x] **Scroll workspace**: right now you cannot scroll the workspace easily. R2
   and the right stick should be a good solution.
+
+- [ ] **Smooth scrolling**: right now, the scrolling is rather jumpy, because we
+  enforce a delay on input activation. Instead different shortcuts should have
+  different delays. Scrolling for example should be continuous unlike node
+  navigation. Discrete jumps should be delayed, continuous jumps should be
+  continuous.
 
 - [ ] **Better help widget**: the help widget should hover over the screen when
   opened, and also have a diagram of the controller.
@@ -50,6 +56,13 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 - [ ] **Better navigation controls**: the default controls migrated from the
   keyboard navigation plugin are quite cumbersome to use, and not very
   intuitive.
+
+- [ ] **Register macros**: allow the user to register macros using custom key
+  combinations. We need a good UI for allowing the user to select operations.
+  Perhaps, you start a record sequence, and then you take note of all of the
+  operations (anything that can be pushed onto the undo stack). Then after
+  recording, you can register a unique key combination. Like a Tekken button
+  combo.
 
 ## Code health
 

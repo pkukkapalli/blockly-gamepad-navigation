@@ -16,6 +16,8 @@ import {
   registrationName as cursorRegistrationName,
   registrationType as cursorRegistrationType} from './flyout_cursor';
 
+const DEFAULT_SCROLL_SPEED = 10;
+
 /**
  * Class that holds all methods necessary for gamepad navigation to work.
  */
@@ -1088,6 +1090,23 @@ export class Navigation {
     cursor.setCurNode(Blockly.ASTNode.createWorkspaceNode(
         workspace, new Blockly.utils.Coordinate(newX, newY)));
     return true;
+  }
+
+  /**
+   * Scrolls the workspace in the given direction.
+   * @param {!Blockly.WorkspaceSvg} workspace The workspace to scroll.
+   * @param {number} xDirection -1 to scroll left. 1 to scroll right.
+   * @param {number} yDirection -1 to scroll up. 1 to scroll down.
+   * @return {boolean} True if scrolling succeeded.
+   * @package
+   */
+  scrollWS(workspace, xDirection, yDirection) {
+    const oldScrollX = workspace.scrollX;
+    const oldScrollY = workspace.scrollY;
+    const scrollX = oldScrollX + (xDirection * DEFAULT_SCROLL_SPEED);
+    const scrollY = oldScrollY + (yDirection * DEFAULT_SCROLL_SPEED);
+    workspace.scroll(scrollX, scrollY);
+    return workspace.scrollX != oldScrollX || workspace.scrollY != oldScrollY;
   }
 
   /**
