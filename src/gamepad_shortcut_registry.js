@@ -82,7 +82,8 @@ export class GamepadShortcutRegistry {
     if (this.combinationMap_.has(serializedCombination) && !optAllowCollision) {
       throw new Error(
           `Shortcut with name ${shortcutName} collides with shortcuts 
-          ${this.combinationMap_.get(serializedCombination)}`);
+          ${Array.from(this.combinationMap_.get(serializedCombination))} for
+          combination ${combination.serialize()}`);
     } else if (this.combinationMap_.has(serializedCombination) &&
                optAllowCollision) {
       this.combinationMap_.get(serializedCombination).add(shortcutName);
@@ -205,6 +206,7 @@ export class GamepadShortcutRegistry {
         console.warn(`Invalid shortcut name used ${shortcutName}.`);
         continue;
       }
+
       const shortcut = this.registry_.get(shortcutName);
       if (shortcut.preconditionFn && !shortcut.preconditionFn(workspace)) {
         continue;

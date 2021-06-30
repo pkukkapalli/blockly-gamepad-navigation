@@ -24,7 +24,10 @@ import {
   connectFakeGamepad,
   disconnectFakeGamepad} from './test_helper';
 import {accessibilityStatus} from '../src/accessibility_status';
-import {GamepadCombination, GamepadButtonType} from '../src/gamepad';
+import {
+  GamepadCombination,
+  GamepadButtonType,
+  GamepadAxisType} from '../src/gamepad';
 
 chai.use(chaiDom);
 
@@ -1229,10 +1232,14 @@ suite('Navigation', function() {
         'Cut node: D-pad right',
         'Delete node: D-pad left',
         'Workspace movement',
-        'Move workspace left: Right stick left',
-        'Move workspace right: Right stick right',
-        'Move workspace up: Right stick up',
-        'Move workspace down: Right stick down',
+        'Move workspace cursor left: Right stick left',
+        'Move workspace cursor right: Right stick right',
+        'Move workspace cursor up: Right stick up',
+        'Move workspace cursor down: Right stick down',
+        'Scroll workspace left: R2 + Right stick left',
+        'Scroll workspace right: R2 + Right stick right',
+        'Scroll workspace up: R2 + Right stick up',
+        'Scroll workspace down: R2 + Right stick down',
         'Other',
         'Toggle toolbox: Square',
         'Exit: Circle',
@@ -1240,5 +1247,65 @@ suite('Navigation', function() {
         'Toggle the help screen: Select',
       ]);
     });
+  });
+
+  suite('Workspace scrolling', function() {
+    setup(function() {
+      this.workspace = createNavigationWorkspace(this.navigation, true);
+      this.controller.addWorkspace(this.workspace);
+      this.workspace.scrollCenter();
+    });
+
+    teardown(function() {
+      sinon.restore();
+    });
+
+    const testCases = [
+      {
+        name: 'Left',
+        combination: new GamepadCombination()
+            .addButton(GamepadButtonType.R2)
+            .addAxis(GamepadAxisType.RIGHT_HORIZONTAL_LEFT),
+        diffX: 10,
+        diffY: 0,
+      },
+      {
+        name: 'Right',
+        combination: new GamepadCombination()
+            .addButton(GamepadButtonType.R2)
+            .addAxis(GamepadAxisType.RIGHT_HORIZONTAL_RIGHT),
+        diffX: -10,
+        diffY: 0,
+      },
+      {
+        name: 'Up',
+        combination: new GamepadCombination()
+            .addButton(GamepadButtonType.R2)
+            .addAxis(GamepadAxisType.RIGHT_VERTICAL_UP),
+        diffX: 0,
+        diffY: 10,
+      },
+      {
+        name: 'Down',
+        combination: new GamepadCombination()
+            .addButton(GamepadButtonType.R2)
+            .addAxis(GamepadAxisType.RIGHT_VERTICAL_DOWN),
+        diffX: 0,
+        diffY: -10,
+      },
+    ];
+
+    for (const {name, combination, diffX, diffY} of testCases) {
+      test(name, function() {
+        const originalX = this.workspace.scrollX;
+        const originalY = this.workspace.scrollY;
+
+        createNavigatorGetGamepadsStub(combination);
+        this.clock.runToFrame();
+
+        chai.assert.equal(this.workspace.scrollY - originalY, diffY);
+        chai.assert.equal(this.workspace.scrollX - originalX, diffX);
+      });
+    }
   });
 });

@@ -19,11 +19,30 @@ import {accessibilityStatus} from './accessibility_status';
 import {GamepadShortcut, GamepadShortcutRegistry} from
   './gamepad_shortcut_registry';
 import {GamepadMonitor} from './gamepad_monitor';
-import {GamepadButtonType, GamepadCombination} from './gamepad';
+import {
+  GamepadAxisType,
+  GamepadButtonType,
+  GamepadCombination} from './gamepad';
 
 const l1AndR1 = new GamepadCombination()
     .addButton(GamepadButtonType.L1)
     .addButton(GamepadButtonType.R1);
+
+const r2AndRightStickUp = new GamepadCombination()
+    .addButton(GamepadButtonType.R2)
+    .addAxis(GamepadAxisType.RIGHT_VERTICAL_UP);
+
+const r2AndRightStickDown = new GamepadCombination()
+    .addButton(GamepadButtonType.R2)
+    .addAxis(GamepadAxisType.RIGHT_VERTICAL_DOWN);
+
+const r2AndRightStickLeft = new GamepadCombination()
+    .addButton(GamepadButtonType.R2)
+    .addAxis(GamepadAxisType.RIGHT_HORIZONTAL_LEFT);
+
+const r2AndRightStickRight = new GamepadCombination()
+    .addButton(GamepadButtonType.R2)
+    .addAxis(GamepadAxisType.RIGHT_HORIZONTAL_RIGHT);
 
 export const DEFAULT_CONTROLS = new Map([
   [Constants.SHORTCUT_NAMES.PREVIOUS, GamepadCombination.LEFT_STICK_UP],
@@ -44,6 +63,10 @@ export const DEFAULT_CONTROLS = new Map([
     GamepadCombination.RIGHT_STICK_UP],
   [Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT,
     GamepadCombination.RIGHT_STICK_RIGHT],
+  [Constants.SHORTCUT_NAMES.SCROLL_WS_UP, r2AndRightStickUp],
+  [Constants.SHORTCUT_NAMES.SCROLL_WS_DOWN, r2AndRightStickDown],
+  [Constants.SHORTCUT_NAMES.SCROLL_WS_LEFT, r2AndRightStickLeft],
+  [Constants.SHORTCUT_NAMES.SCROLL_WS_RIGHT, r2AndRightStickRight],
   [Constants.SHORTCUT_NAMES.COPY, GamepadCombination.UP],
   [Constants.SHORTCUT_NAMES.PASTE, GamepadCombination.DOWN],
   [Constants.SHORTCUT_NAMES.CUT, GamepadCombination.RIGHT],
@@ -376,6 +399,18 @@ export class NavigationController {
         <li>
           ${this.helpTextForShortcut(
       Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_LEFT)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_RIGHT)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_UP)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_DOWN)}
         </li>
       </ul>
 
@@ -879,6 +914,94 @@ export class NavigationController {
   }
 
   /**
+   * Gamepad shortcut to scroll the entire workspace left.
+   * @protected
+   */
+  registerWorkspaceScrollLeft() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SCROLL_WS_LEFT,
+      preconditionFn: (workspace) => {
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
+      },
+      callback: (workspace) => {
+        return this.navigation.scrollWS(workspace, 1, 0);
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name),
+        shortcut.name);
+  }
+
+  /**
+   * Gamepad shortcut to scroll the entire workspace right.
+   * @protected
+   */
+  registerWorkspaceScrollRight() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SCROLL_WS_RIGHT,
+      preconditionFn: (workspace) => {
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
+      },
+      callback: (workspace) => {
+        return this.navigation.scrollWS(workspace, -1, 0);
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name),
+        shortcut.name);
+  }
+
+  /**
+   * Gamepad shortcut to scroll the entire workspace up.
+   * @protected
+   */
+  registerWorkspaceScrollUp() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SCROLL_WS_UP,
+      preconditionFn: (workspace) => {
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
+      },
+      callback: (workspace) => {
+        return this.navigation.scrollWS(workspace, 0, 1);
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name),
+        shortcut.name);
+  }
+
+  /**
+   * Gamepad shortcut to scroll the entire workspace down.
+   * @protected
+   */
+  registerWorkspaceScrollDown() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SCROLL_WS_DOWN,
+      preconditionFn: (workspace) => {
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
+      },
+      callback: (workspace) => {
+        return this.navigation.scrollWS(workspace, 0, -1);
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name),
+        shortcut.name);
+  }
+
+  /**
    * Gamepad shortcut to copy the block the cursor is currently on.
    * @protected
    */
@@ -1050,6 +1173,11 @@ export class NavigationController {
     this.registerWorkspaceMoveLeft();
     this.registerWorkspaceMoveUp();
     this.registerWorkspaceMoveRight();
+
+    this.registerWorkspaceScrollDown();
+    this.registerWorkspaceScrollUp();
+    this.registerWorkspaceScrollLeft();
+    this.registerWorkspaceScrollRight();
 
     this.registerCopy();
     this.registerPaste();

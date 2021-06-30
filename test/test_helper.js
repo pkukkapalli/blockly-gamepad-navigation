@@ -13,13 +13,15 @@ import * as Constants from '../src/constants';
 /**
  * Appends a div with the given ID to the document body.
  * @param {string} id The ID to assign to the element.
+ * @param {number=} optHeight Optional height (in pixels) to set for the div.
  */
-export function createDiv(id) {
+export function createDiv(id, optHeight = 600) {
   if (document.getElementById(id)) {
     return;
   }
   const element = document.createElement('div');
   element.id = id;
+  element.style.height = `${optHeight}px`;
   document.body.append(element);
 }
 

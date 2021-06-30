@@ -46,6 +46,10 @@ export const SHORTCUT_NAMES = {
   MOVE_WS_CURSOR_DOWN: 'workspace_down',
   MOVE_WS_CURSOR_LEFT: 'workspace_left',
   MOVE_WS_CURSOR_RIGHT: 'workspace_right',
+  SCROLL_WS_UP: 'scroll_workspace_up',
+  SCROLL_WS_DOWN: 'scroll_workspace_down',
+  SCROLL_WS_LEFT: 'scroll_workspace_left',
+  SCROLL_WS_RIGHT: 'scroll_workspace_right',
   TOGGLE_HELP: 'help',
 };
 
@@ -70,10 +74,14 @@ export const SHORTCUT_DISPLAY_NAMES = new Map([
   [SHORTCUT_NAMES.CUT, 'Cut node'],
   [SHORTCUT_NAMES.PASTE, 'Paste node'],
   [SHORTCUT_NAMES.DELETE, 'Delete node'],
-  [SHORTCUT_NAMES.MOVE_WS_CURSOR_UP, 'Move workspace up'],
-  [SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN, 'Move workspace down'],
-  [SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT, 'Move workspace left'],
-  [SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT, 'Move workspace right'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_UP, 'Move workspace cursor up'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN, 'Move workspace cursor down'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT, 'Move workspace cursor left'],
+  [SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT, 'Move workspace cursor right'],
+  [SHORTCUT_NAMES.SCROLL_WS_UP, 'Scroll workspace up'],
+  [SHORTCUT_NAMES.SCROLL_WS_DOWN, 'Scroll workspace down'],
+  [SHORTCUT_NAMES.SCROLL_WS_LEFT, 'Scroll workspace left'],
+  [SHORTCUT_NAMES.SCROLL_WS_RIGHT, 'Scroll workspace right'],
   [SHORTCUT_NAMES.TOGGLE_HELP, 'Toggle the help screen'],
 ]);
 
