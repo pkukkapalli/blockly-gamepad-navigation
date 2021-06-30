@@ -7,6 +7,12 @@ import cloneDeep from 'lodash.clonedeep';
 import {GamepadCombination} from './gamepad';
 
 /**
+ * The number of milliseconds to wait in between each activation of a shortcut,
+ * if a delay is not specified in the shortcut configuration upon registration.
+ */
+const DEFAULT_MILLISECONDS_BETWEEN_ACTIVATIONS = 200;
+
+/**
  * Class for the registry of gamepad shortcuts. This is intended to be a
  * singleton. You should not create a new instance, and only access this class
  * from gamepadShortcutRegistry.
@@ -29,6 +35,14 @@ export class GamepadShortcutRegistry {
      * @private
      */
     this.combinationMap_ = new Map();
+
+    /**
+     * For each shortcut name, this map indicates the last timestamp at which
+     * it was activated.
+     * @type {!Map<string, number>}
+     * @private
+     */
+    this.lastActivationMap_ = new Map();
   }
 
   /**
@@ -192,10 +206,12 @@ export class GamepadShortcutRegistry {
    * @param {!Blockly.Workspace} workspace The active workspace to apply the
    *     operation to.
    * @param {!GamepadCombination} combination The combination pressed.
+   * @param {number} timestamp The current timestamp. This should be the same
+   *     timestamp provided by requestAnimationFrame.
    * @return {boolean} True if the combination was handled, false otherwise.
    * @public
    */
-  onActivate(workspace, combination) {
+  onActivate(workspace, combination, timestamp) {
     if (combination.isEmpty()) {
       return false;
     }
@@ -211,9 +227,20 @@ export class GamepadShortcutRegistry {
       if (shortcut.preconditionFn && !shortcut.preconditionFn(workspace)) {
         continue;
       }
+
+      const lastActivatedAt = this.lastActivationMap_.get(shortcutName);
+      // We cannot check for falsiness on shortcut.delay, because 0 is a valid
+      // value. What a wonderful language.
+      const delay = shortcut.delay === undefined ?
+          DEFAULT_MILLISECONDS_BETWEEN_ACTIVATIONS : shortcut.delay;
+      if (lastActivatedAt && timestamp - lastActivatedAt <= delay) {
+        continue;
+      }
+
       // If the combination has been handled, stop processing shortcuts.
       if (shortcut.callback &&
         shortcut.callback(workspace, combination, shortcut)) {
+        this.lastActivationMap_.set(shortcutName, timestamp);
         return true;
       }
     }
@@ -261,7 +288,8 @@ export class GamepadShortcutRegistry {
  * GamepadShortcut):boolean)|undefined),
  *    name: string,
  *    preconditionFn: ((function(!Blockly.Workspace):boolean)|undefined),
- *    metadata: (Object|undefined)
+ *    metadata: (Object|undefined),
+ *    delay: (number|undefined),
  * }}
  */
 export const GamepadShortcut = {};
