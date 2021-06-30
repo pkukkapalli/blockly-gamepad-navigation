@@ -27,11 +27,15 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 - [x] **Scroll workspace**: right now you cannot scroll the workspace easily. R2
   and the right stick should be a good solution.
 
-- [ ] **Smooth scrolling**: right now, the scrolling is rather jumpy, because we
+- [x] **Smooth scrolling**: right now, the scrolling is rather jumpy, because we
   enforce a delay on input activation. Instead different shortcuts should have
   different delays. Scrolling for example should be continuous unlike node
   navigation. Discrete jumps should be delayed, continuous jumps should be
-  continuous.
+  continuous. Move time considerations from `gamepad_monitor.js` to
+  `gamepad_shortcut_registry.js`. It should be map from the shortcut name to the
+  timestamp when it was last executed. Then, the registry can activate the
+  shortcut if it has passed a given delay. The delay will be defined on each
+  `GamepadShortcut`.
 
 - [ ] **Better help widget**: the help widget should hover over the screen when
   opened, and also have a diagram of the controller.
@@ -51,7 +55,8 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 
 - [ ] **Better test app**: the test app is quite clunky. The instructions on the
   top take up quite a lot of space, and it also uses a lot of horizontal space,
-  which can make using the Chrome developer tools cumbersome.
+  which can make using the Chrome developer tools cumbersome. Make the
+  instructions and intro dismissable.
 
 - [ ] **Better navigation controls**: the default controls migrated from the
   keyboard navigation plugin are quite cumbersome to use, and not very

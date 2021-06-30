@@ -927,6 +927,7 @@ export class NavigationController {
       callback: (workspace) => {
         return this.navigation.scrollWS(workspace, 1, 0);
       },
+      delay: 0,
     };
 
     this.gamepadShortcutRegistry.register(shortcut);
@@ -949,6 +950,7 @@ export class NavigationController {
       callback: (workspace) => {
         return this.navigation.scrollWS(workspace, -1, 0);
       },
+      delay: 0,
     };
 
     this.gamepadShortcutRegistry.register(shortcut);
@@ -971,6 +973,7 @@ export class NavigationController {
       callback: (workspace) => {
         return this.navigation.scrollWS(workspace, 0, 1);
       },
+      delay: 0,
     };
 
     this.gamepadShortcutRegistry.register(shortcut);
@@ -993,6 +996,7 @@ export class NavigationController {
       callback: (workspace) => {
         return this.navigation.scrollWS(workspace, 0, -1);
       },
+      delay: 0,
     };
 
     this.gamepadShortcutRegistry.register(shortcut);

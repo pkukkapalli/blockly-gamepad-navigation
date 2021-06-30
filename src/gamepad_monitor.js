@@ -10,7 +10,6 @@ import {
   GamepadCombination} from './gamepad';
 import {GamepadShortcutRegistry} from './gamepad_shortcut_registry';
 
-const DEFAULT_DELAY_BETWEEN_COMBINATIONS_MILLISECONDS = 200;
 const DEFAULT_AXIS_ACTIVATION_THRESHOLD = 0.4;
 
 /**
@@ -21,13 +20,10 @@ export class GamepadMonitor {
    * Constructs a gamepad monitor.
    * @param {GamepadShortcutRegistry=} optShortcutRegistry The shortcut
    *     registry to trigger when buttons or axes are activated.
-   * @param {number=} optDelayBetweenCombinations The delay between when each
-   *     button combination is handled in milliseconds.
    * @param {number=} optAxisActivationThreshold The degree, on a scale of 0.0
    *     to 1.0, of when an axis can be considered as activated.
    */
-  constructor(optShortcutRegistry, optDelayBetweenCombinations,
-      optAxisActivationThreshold) {
+  constructor(optShortcutRegistry, optAxisActivationThreshold) {
     /**
      * The shortcut registry that will be triggered when buttons or axes are
      * activated.
@@ -44,15 +40,6 @@ export class GamepadMonitor {
     this.connectedGamepadIndexes_ = new Set();
 
     /**
-     * The delay between when each button combination is handled in
-     * milliseconds.
-     * @type {number}
-     * @private
-     */
-    this.delayBetweenCombinations_ = optDelayBetweenCombinations ||
-      DEFAULT_DELAY_BETWEEN_COMBINATIONS_MILLISECONDS;
-
-    /**
      * The amount that an axis should be moved in either direction before it is
      * considered activated, on a scale of 0.0 to 1.0.
      * @type {number}
@@ -60,15 +47,6 @@ export class GamepadMonitor {
      */
     this.axisActivationThreshold_ = optAxisActivationThreshold ||
       DEFAULT_AXIS_ACTIVATION_THRESHOLD;
-
-    /**
-     * The time since the last command was handled by the monitor. This is to
-     * be used in conjunction with delayBetweenCombinations_ to ensure that
-     * commands are not handled too frequently.
-     * @type {number}
-     * @private
-     */
-    this.timeSinceLastCommandHandled_ = Number.NEGATIVE_INFINITY;
 
     /**
      * The workspaces that we are monitoring input for.
@@ -179,27 +157,16 @@ export class GamepadMonitor {
       return;
     }
 
-    const elapsedTime =
-        Math.floor(timestamp) - this.timeSinceLastCommandHandled_;
-    if (elapsedTime <= this.delayBetweenCombinations_) {
-      requestAnimationFrame(
-          (timestamp) => this.handleAnimationFrame_(timestamp));
-      return;
-    }
-
     let isHandled = false;
     const gamepads = navigator.getGamepads();
     for (const gamepadIndex of this.connectedGamepadIndexes_) {
       const gamepad = gamepads[gamepadIndex];
       const combination = this.currentCombination_(gamepad);
       for (const workspace of this.workspaces_) {
-        isHandled = this.registry_.onActivate(workspace, combination) ||
+        isHandled = this.registry_.onActivate(
+            workspace, combination, timestamp) ||
             isHandled;
       }
-    }
-
-    if (isHandled) {
-      this.timeSinceLastCommandHandled_ = Math.floor(timestamp);
     }
 
     requestAnimationFrame(
