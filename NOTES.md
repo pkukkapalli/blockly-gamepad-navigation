@@ -53,7 +53,7 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 - [ ] **Detect controller**: help text should be updated according to the
   gamepad being used.
 
-- [ ] **Better test app**: the test app is quite clunky. The instructions on the
+- [x] **Better test app**: the test app is quite clunky. The instructions on the
   top take up quite a lot of space, and it also uses a lot of horizontal space,
   which can make using the Chrome developer tools cumbersome. Make the
   instructions and intro dismissable.
@@ -68,6 +68,11 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   operations (anything that can be pushed onto the undo stack). Then after
   recording, you can register a unique key combination. Like a Tekken button
   combo.
+
+- [ ] **Allow free scrolling**: instead of having a cursor that navigates
+  through blocks. Allow the user to go around with a free cursor not constrained
+  to any block, and allow them to lock onto any block that they are close to.
+  The workspace should of course automatically scroll around the cursor.
 
 ## Code health
 

@@ -34,6 +34,15 @@ function createWorkspace(blocklyDiv, options) {
   return workspace;
 }
 
+/**
+ * Dismiss the intro block.
+ * @extern
+ */
+window.dismissIntro = function() {
+  const intro = document.getElementById('intro');
+  intro.style.display = 'none';
+};
+
 document.addEventListener('DOMContentLoaded', function() {
   const gamepadShortcutRegistry = new GamepadShortcutRegistry();
   const gamepadMonitor = new GamepadMonitor(gamepadShortcutRegistry);
