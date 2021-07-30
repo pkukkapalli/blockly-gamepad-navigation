@@ -19,6 +19,7 @@ export const STATE = {
   WORKSPACE: 'workspace',
   FLYOUT: 'flyout',
   TOOLBOX: 'toolbox',
+  HELP: 'help',
 };
 
 /**
@@ -50,7 +51,7 @@ export const SHORTCUT_NAMES = {
   SCROLL_WS_DOWN: 'scroll_workspace_down',
   SCROLL_WS_LEFT: 'scroll_workspace_left',
   SCROLL_WS_RIGHT: 'scroll_workspace_right',
-  TOGGLE_HELP: 'help',
+  OPEN_HELP: 'help',
 };
 
 /**

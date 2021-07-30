@@ -14,7 +14,7 @@ import FakeTimers from '@sinonjs/fake-timers';
 
 import Blockly from 'blockly';
 import {NavigationController, Navigation,
-  GamepadMonitor, Constants, DEFAULT_CONTROLS}
+  GamepadMonitor, Constants}
   from '../src/index';
 import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
 import {
@@ -28,6 +28,7 @@ import {
   GamepadCombination,
   GamepadButtonType,
   GamepadAxisType} from '../src/gamepad';
+import {ModalManager} from '../src/modal';
 
 chai.use(chaiDom);
 
@@ -37,7 +38,7 @@ suite('Navigation', function() {
     this.clock = FakeTimers.install();
 
     createDiv('blocklyDiv');
-    createDiv('helpText');
+    createDiv('modalContainer');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };
@@ -51,10 +52,16 @@ suite('Navigation', function() {
     /** @type {GamepadMonitor} */
     this.gamepadMonitor = new GamepadMonitor(this.gamepadShortcutRegistry);
 
+    /** @type {ModalManager} */
+    this.modalManager = new ModalManager('modalContainer');
+
     /** @type {NavigationController} */
-    this.controller = new NavigationController(
-        this.navigation, this.gamepadShortcutRegistry, this.gamepadMonitor,
-        DEFAULT_CONTROLS, 'helpText');
+    this.controller = new NavigationController({
+      optNavigation: this.navigation,
+      optGamepadShortcutRegistry: this.gamepadShortcutRegistry,
+      optGamepadMonitor: this.gamepadMonitor,
+      optModalManager: this.modalManager,
+    });
     this.controller.init();
 
     connectFakeGamepad();
@@ -1215,7 +1222,7 @@ suite('Navigation', function() {
       createNavigatorGetGamepadsStub(gamepadCombination);
       this.clock.runToFrame();
 
-      const instructions = document.querySelector('#helpText').innerText
+      const instructions = document.querySelector('#help-popup').innerText
           .split('\n');
       chai.assert.sameDeepOrderedMembers(instructions, [
         'Navigation',

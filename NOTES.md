@@ -37,13 +37,22 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   shortcut if it has passed a given delay. The delay will be defined on each
   `GamepadShortcut`.
 
-- [ ] **Better help widget**: the help widget should hover over the screen when
-  opened, and also have a diagram of the controller.
+- [x] **Better help widget**: the help widget should hover over the screen when
+  opened, and also have a diagram of the controller. **Update:** It is now in a
+  popup.
+
+- [ ] **Gamepad diagram on help popup**: the help widget should now show the
+  gamepad diagram, not just a list of text.
 
 - [ ] **Text input**: investigate best ways to input text with a game
   controller. Maybe a wheel that lets you quickly jump between letters? Suggest
   words based on a dictionary? See [article][gamepad-text] on how to do text
-  input.
+  input. The `NavigationController` class gets a new state, which is
+  `TEXT_INPUT` when the virtual keyboard is in focus. Then, all movements during
+  this state will be sent to the `VirtualKeyboard` to process, and enter as
+  text. In order to actually get the field input to work as expected, i.e. open
+  a popup for the controller, you have to override `FieldTextInput` and register
+  it.
 
 - [ ] **Update plugin documentation**: the documentation is a bit stale and
   incomplete.
@@ -73,6 +82,10 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   through blocks. Allow the user to go around with a free cursor not constrained
   to any block, and allow them to lock onto any block that they are close to.
   The workspace should of course automatically scroll around the cursor.
+
+- [ ] **Control cooldown:** certain commands should not be executed too closely
+  together. For example, if I press circle to exit, the plugin should also avoid
+  applying disconnect, because it's a different command altogether.
 
 ## Code health
 
@@ -130,6 +143,10 @@ plugin, or cleanup the existing code structure to make it easier to work with.
 - [ ] **Optional parameters**: the optional parameters for
   `NavigationController` are all positional right now. It would be better if
   they were packed into an object.
+
+- [ ] **Smaller test files**: right now, `navigation_test.mocha.js` is a
+  monolithic test file that verifies most of the functionality. In reality, it
+  should be broken up into smaller files.
 
 [keyboardAccessibilityMode]:https://developers.google.com/blockly/reference/js/Blockly.WorkspaceSvg#keyboardAccessibilityMode
 
