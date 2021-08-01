@@ -22,6 +22,7 @@ import {
   from './test_helper';
 import {GamepadCombination} from '../src/gamepad';
 import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
+import {ModalManager} from '../src/modal';
 
 suite('Shortcut Tests', function() {
   /**
@@ -113,6 +114,7 @@ suite('Shortcut Tests', function() {
     this.clock = FakeTimers.install();
 
     createDiv('blocklyDiv');
+    createDiv('modalContainer');
     Blockly.utils.dom.getFastTextWidthWithSizeString = function() {
       return 10;
     };
@@ -131,9 +133,15 @@ suite('Shortcut Tests', function() {
     /** @type {GamepadMonitor} */
     this.gamepadMonitor = new GamepadMonitor(gamepadShortcutRegistry);
 
+    /** @type {ModalManager} */
+    this.modalManager = new ModalManager('modalContainer');
+
     /** @type {NavigationController} */
-    this.controller = new NavigationController(
-        this.navigation, gamepadShortcutRegistry, this.gamepadMonitor);
+    this.controller = new NavigationController({
+      optNavigation: this.navigation,
+      optGamepadShortcutRegistry: gamepadShortcutRegistry,
+      optGamepadMonitor: this.gamepadMonitor,
+      optModalManager: this.modalManager});
     this.controller.init();
 
     /** @type {Blockly.WorkspaceSvg} */

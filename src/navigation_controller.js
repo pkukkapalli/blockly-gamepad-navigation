@@ -23,6 +23,8 @@ import {
   GamepadAxisType,
   GamepadButtonType,
   GamepadCombination} from './gamepad';
+import {HelpPopup} from './help';
+import {ModalManager} from './modal';
 
 const l1AndR1 = new GamepadCombination()
     .addButton(GamepadButtonType.L1)
@@ -82,22 +84,25 @@ export class NavigationController {
    * Constructor used for registering shortcuts.
    * This will register any default shortcuts for gamepad navigation.
    * This is intended to be a singleton.
-   * @param {!Navigation=} optNavigation The class that handles gamepad
+   * @param {object} o The parameter object with the following properties.
+   * @param {!Navigation=} o.optNavigation The class that handles gamepad
    *     navigation shortcuts. (Ex: inserting a block, focusing the flyout).
-   * @param {!GamepadShortcutRegistry=} optGamepadShortcutRegistry The shortcut
-   *     registry to use.
-   * @param {!GamepadMonitor=} optGamepadMonitor The gamepad monitor to use for
-   *     getting input from the gamepad.
-   * @param {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>=} optControls A
-   *     custom control configuration for the plugin.
-   * @param {!HTMLElement=} optHelpContainerId The ID of an HTML element that
-   *     can hold help text to show the user how to use the plugin.
+   * @param {!GamepadShortcutRegistry=} o.optGamepadShortcutRegistry The
+   *     shortcut registry to use.
+   * @param {!GamepadMonitor=} o.optGamepadMonitor The gamepad monitor to use
+   *     for getting input from the gamepad.
+   * @param {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>=} o.optControls
+   *     A custom control configuration for the plugin.
+   * @param {!ModalManager} o.optModalManager The modal manager to initialize
+   *     with.
+   * @param {!HelpPopup} o.optHelpPopup A custom help popup to use.
    */
-  constructor(optNavigation,
-      optGamepadShortcutRegistry,
-      optGamepadMonitor,
-      optControls,
-      optHelpContainerId) {
+  constructor({optNavigation,
+    optGamepadShortcutRegistry,
+    optGamepadMonitor,
+    optControls,
+    optModalManager,
+    optHelpPopup}) {
     /**
      * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
@@ -122,25 +127,25 @@ export class NavigationController {
         new GamepadMonitor(this.gamepadShortcutRegistry);
 
     /**
+     * Manages any modal popups we create.
+     * @type {!ModalManager}
+     * @public
+     */
+    this.modalManager = optModalManager || new ModalManager();
+
+    /**
+     * A popup to show instructions for using the plugin.
+     * @type {!HelpPopup}
+     * @public
+     */
+    this.helpPopup = optHelpPopup || new HelpPopup();
+
+    /**
      * The control configuration for each action.
      * @type {!Map<Constants.SHORTCUT_NAMES, GamepadCombination>}
      * @protected
      */
     this.controls = optControls || DEFAULT_CONTROLS;
-
-    /**
-     * Where to display the help text for the current configuration if at all.
-     * @type {string|undefined}
-     * @protected
-     */
-    this.helpContainerId = optHelpContainerId;
-
-    /**
-     * Whether or not the help container is shown.
-     * @type {boolean}
-     * @protected
-     */
-    this.isHelpVisible = false;
   }
 
   /**
@@ -151,8 +156,8 @@ export class NavigationController {
     this.addShortcutHandlers();
     this.registerDefaults();
     this.gamepadMonitor.init();
-    this.initializeHelpContainer();
-    this.updateHelpContainer();
+    this.modalManager.init();
+    this.helpPopup.init(this.modalManager, this.controls);
   }
 
   /**
@@ -340,124 +345,6 @@ export class NavigationController {
           .onShortcut(shortcut);
     }
     return false;
-  }
-
-  /**
-   * Gets the element that can contain the help text, if it exists.
-   * @return {HTMLElement|undefined} The element if found.
-   * @protected
-   */
-  getHelpContainer() {
-    if (!this.helpContainerId) return;
-    return document.getElementById(this.helpContainerId);
-  }
-
-  /**
-   * Adds the help text to the help container.
-   * @protected
-   */
-  initializeHelpContainer() {
-    const helpContainer = this.getHelpContainer();
-    if (!helpContainer) return;
-
-    helpContainer.innerHTML = `
-      <h1>Navigation</h1>
-      <ul>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.PREVIOUS)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.NEXT)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.IN)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.OUT)}</li>
-      </ul>
-
-      <h1>Block manipulation</h1>
-      <ul>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.DISCONNECT)}
-        </li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.INSERT)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.MARK)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.COPY)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.PASTE)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.CUT)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.DELETE)}</li>
-      </ul>
-
-      <h1>Workspace movement</h1>
-      <ul>
-        <li>
-          ${this.helpTextForShortcut(
-      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_LEFT)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(
-      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_RIGHT)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(
-      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_UP)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(
-      Constants.SHORTCUT_NAMES.MOVE_WS_CURSOR_DOWN)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_LEFT)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_RIGHT)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_UP)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.SCROLL_WS_DOWN)}
-        </li>
-      </ul>
-
-      <h1>Other</h1>
-      <ul>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.TOOLBOX)}</li>
-        <li>${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.EXIT)}</li>
-        <li>
-          ${this.helpTextForShortcut(
-      Constants.SHORTCUT_NAMES.TOGGLE_GAMEPAD_NAV)}
-        </li>
-        <li>
-          ${this.helpTextForShortcut(Constants.SHORTCUT_NAMES.TOGGLE_HELP)}
-        </li>
-      </ul>
-    `;
-  }
-
-  /**
-   * Renders the help text for activating the given shortcut.
-   * @param {Constants.SHORTCUT_NAMES} shortcutName The name of the shortcut to
-   *     render help text for.
-   * @return {string} The help text.
-   */
-  helpTextForShortcut(shortcutName) {
-    const shortcutDisplayName =
-        Constants.SHORTCUT_DISPLAY_NAMES.get(shortcutName);
-    const combinationText = this.controls.get(shortcutName).displayText();
-    return `<b>${shortcutDisplayName}:</b> ${combinationText}`;
-  }
-
-  /**
-   * Renders the help container if it is visible, and hides it otherwise.
-   * @return {boolean} True if the container was updated, false otherwise.
-   * @protected
-   */
-  updateHelpContainer() {
-    const helpContainer = this.getHelpContainer();
-    if (!helpContainer) return false;
-
-    if (this.isHelpVisible) {
-      helpContainer.style.visibility = 'visible';
-    } else {
-      helpContainer.style.visibility = 'hidden';
-    }
-
-    return true;
   }
 
   /**
@@ -731,7 +618,8 @@ export class NavigationController {
       name: Constants.SHORTCUT_NAMES.DISCONNECT,
       preconditionFn: (workspace) => {
         return accessibilityStatus.isGamepadAccessibilityEnabled(workspace) &&
-            !workspace.options.readOnly;
+            !workspace.options.readOnly &&
+            this.navigation.getState(workspace) === Constants.STATE.WORKSPACE;
       },
       callback: (workspace) => {
         switch (this.navigation.getState(workspace)) {
@@ -802,6 +690,10 @@ export class NavigationController {
             this.navigation.focusWorkspace(workspace);
             return true;
           case Constants.STATE.TOOLBOX:
+            this.navigation.focusWorkspace(workspace);
+            return true;
+          case Constants.STATE.HELP:
+            this.helpPopup.hide();
             this.navigation.focusWorkspace(workspace);
             return true;
           default:
@@ -1135,17 +1027,17 @@ export class NavigationController {
    * Registers shortcut to show help dialog.
    * @protected
    */
-  registerToggleHelp() {
+  registerOpenHelp() {
     /** @type {!GamepadShortcut} */
     const toggleHelpShortcut = {
-      name: Constants.SHORTCUT_NAMES.TOGGLE_HELP,
-      preconditionFn: () => {
-        const helpContainer = this.getHelpContainer();
-        return !!helpContainer;
+      name: Constants.SHORTCUT_NAMES.OPEN_HELP,
+      preconditionFn: (workspace) => {
+        return accessibilityStatus.isGamepadAccessibilityEnabled(workspace);
       },
-      callback: () => {
-        this.isHelpVisible = !this.isHelpVisible;
-        return this.updateHelpContainer();
+      callback: (workspace) => {
+        this.helpPopup.show();
+        this.navigation.setState(workspace, Constants.STATE.HELP);
+        return true;
       },
     };
 
@@ -1188,7 +1080,7 @@ export class NavigationController {
     this.registerCut();
     this.registerDelete();
 
-    this.registerToggleHelp();
+    this.registerOpenHelp();
   }
 
   /**
@@ -1203,5 +1095,6 @@ export class NavigationController {
     this.removeShortcutHandlers();
     this.navigation.dispose();
     this.gamepadMonitor.dispose();
+    this.modalManager.dispose();
   }
 }

@@ -21,3 +21,6 @@ gh-pages/examples
 
 # Optional npm cache directory
 .npm
+
+# Editor config
+*.code-workspace
