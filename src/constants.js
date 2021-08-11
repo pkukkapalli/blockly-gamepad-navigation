@@ -20,6 +20,7 @@ export const STATE = {
   FLYOUT: 'flyout',
   TOOLBOX: 'toolbox',
   HELP: 'help',
+  TEXT_INPUT: 'text_input',
 };
 
 /**

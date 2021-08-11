@@ -35,11 +35,6 @@ complicated, so as a first step, we will start with an extremely naive
 controller setup. The cursor is sticky, and just moves in the cardinal
 directions.
 
-## Modals
-
-Need a proper way to create modals. A global function that can open an arbitrary
-modal. Initialize your modal content, and then open it.
-
 [FieldTextInput]:https://github.com/google/blockly/blob/master/core/field_textinput.js
 [Blockly.prompt]:https://github.com/google/blockly/blob/master/core/blockly.js#L362
 [showEditor_]:https://github.com/google/blockly/blob/master/core/field_textinput.js#L293

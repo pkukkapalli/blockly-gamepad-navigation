@@ -25,6 +25,8 @@ import {
   GamepadCombination} from './gamepad';
 import {HelpPopup} from './help';
 import {ModalManager} from './modal';
+import {TextInputPopup} from './text_input';
+import {gamepadFieldTextInputFactory} from './field_gamepad_text_input';
 
 const l1AndR1 = new GamepadCombination()
     .addButton(GamepadButtonType.L1)
@@ -96,13 +98,15 @@ export class NavigationController {
    * @param {!ModalManager} o.optModalManager The modal manager to initialize
    *     with.
    * @param {!HelpPopup} o.optHelpPopup A custom help popup to use.
+   * @param {!TextInputPopup} o.optTextInputPopup A custom popup for text input.
    */
   constructor({optNavigation,
     optGamepadShortcutRegistry,
     optGamepadMonitor,
     optControls,
     optModalManager,
-    optHelpPopup}) {
+    optHelpPopup,
+    optTextInputPopup}) {
     /**
      * Handles any gamepad navigation shortcuts.
      * @type {!Navigation}
@@ -146,6 +150,13 @@ export class NavigationController {
      * @protected
      */
     this.controls = optControls || DEFAULT_CONTROLS;
+
+    /**
+     * A popup to show a virtual keyboard.
+     * @type {!TextInputPopup}
+     * @public
+     */
+    this.textInputPopup = optTextInputPopup || new TextInputPopup();
   }
 
   /**
@@ -153,11 +164,16 @@ export class NavigationController {
    * @public
    */
   init() {
+    this.modalManager.init();
+    this.helpPopup.init(this.modalManager, this.controls);
+    this.textInputPopup.init(this.modalManager);
+    const textInputClass = gamepadFieldTextInputFactory(this.navigation,
+        this.textInputPopup);
+    Blockly.fieldRegistry.unregister('field_input');
+    Blockly.fieldRegistry.register('field_input', textInputClass);
     this.addShortcutHandlers();
     this.registerDefaults();
     this.gamepadMonitor.init();
-    this.modalManager.init();
-    this.helpPopup.init(this.modalManager, this.controls);
   }
 
   /**
@@ -696,6 +712,10 @@ export class NavigationController {
             this.helpPopup.hide();
             this.navigation.focusWorkspace(workspace);
             return true;
+          case Constants.STATE.TEXT_INPUT:
+            this.textInputPopup.hide();
+            this.navigation.focusWorkspace(workspace);
+            return true;
           default:
             return false;
         }
@@ -1096,5 +1116,7 @@ export class NavigationController {
     this.navigation.dispose();
     this.gamepadMonitor.dispose();
     this.modalManager.dispose();
+    Blockly.fieldRegistry.unregister('field_input');
+    Blockly.fieldRegistry.register('field_input', Blockly.FieldTextInput);
   }
 }

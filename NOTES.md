@@ -87,6 +87,8 @@ plugin, or cleanup the existing code structure to make it easier to work with.
   together. For example, if I press circle to exit, the plugin should also avoid
   applying disconnect, because it's a different command altogether.
 
+- [ ] **Scrolling not working:** The scrolling isn't working anymore for some reason.
+
 ## Code health
 
 - [ ] **Registering shortcuts**: the keyboard navigation plugin uses a
