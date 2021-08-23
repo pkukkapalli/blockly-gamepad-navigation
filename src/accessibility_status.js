@@ -48,9 +48,3 @@ export class AccessibilityStatus {
     this.enabledWorkspaceIds_.delete(workspace.id);
   }
 }
-
-/**
- * Singleton instance of the AccessbilityStatus class. Rather than
- * instantiating your own, this should be used.
- */
-export const accessibilityStatus = new AccessibilityStatus();

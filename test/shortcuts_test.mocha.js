@@ -23,6 +23,7 @@ import {
 import {GamepadCombination} from '../src/gamepad';
 import {GamepadShortcutRegistry} from '../src/gamepad_shortcut_registry';
 import {ModalManager} from '../src/modal';
+import {AccessibilityStatus} from '../src/accessibility_status';
 
 suite('Shortcut Tests', function() {
   /**
@@ -125,8 +126,10 @@ suite('Shortcut Tests', function() {
       'nextStatement': null,
     }]);
 
+    this.accessibilityStatus = new AccessibilityStatus();
+
     /** @type {Navigation} */
-    this.navigation = new Navigation();
+    this.navigation = new Navigation(this.accessibilityStatus);
 
     const gamepadShortcutRegistry = new GamepadShortcutRegistry();
 
@@ -141,7 +144,8 @@ suite('Shortcut Tests', function() {
       optNavigation: this.navigation,
       optGamepadShortcutRegistry: gamepadShortcutRegistry,
       optGamepadMonitor: this.gamepadMonitor,
-      optModalManager: this.modalManager});
+      optModalManager: this.modalManager,
+      optAccessibilityStatus: this.accessibilityStatus});
     this.controller.init();
 
     /** @type {Blockly.WorkspaceSvg} */
