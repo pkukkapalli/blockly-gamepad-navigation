@@ -9,6 +9,7 @@ import Blockly from 'blockly';
 import {Navigation} from '../src/navigation';
 import {testHelpers} from '@blockly/dev-tools';
 import {createDiv} from './test_helper';
+import {AccessibilityStatus} from '../src/accessibility_status';
 
 const assert = chai.assert;
 const {captureWarnings} = testHelpers;
@@ -99,7 +100,7 @@ suite('Insert/Modify', function() {
     </xml>`,
     });
     Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xmlText), this.workspace);
-    this.navigation = new Navigation();
+    this.navigation = new Navigation(new AccessibilityStatus());
     this.navigation.addWorkspace(this.workspace);
 
 

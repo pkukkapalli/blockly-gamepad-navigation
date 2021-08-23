@@ -23,12 +23,12 @@ import {
   createDiv,
   connectFakeGamepad,
   disconnectFakeGamepad} from './test_helper';
-import {accessibilityStatus} from '../src/accessibility_status';
 import {
   GamepadCombination,
   GamepadButtonType,
   GamepadAxisType} from '../src/gamepad';
 import {ModalManager} from '../src/modal';
+import {AccessibilityStatus} from '../src/accessibility_status';
 
 chai.use(chaiDom);
 
@@ -43,8 +43,11 @@ suite('Navigation', function() {
       return 10;
     };
 
+    /** @type {AccessibilityStatus} */
+    this.accessibilityStatus = new AccessibilityStatus();
+
     /** @type {NavigationController} */
-    this.navigation = new Navigation();
+    this.navigation = new Navigation(this.accessibilityStatus);
 
     /** @type {GamepadShortcutRegistry} */
     this.gamepadShortcutRegistry = new GamepadShortcutRegistry();
@@ -61,6 +64,7 @@ suite('Navigation', function() {
       optGamepadShortcutRegistry: this.gamepadShortcutRegistry,
       optGamepadMonitor: this.gamepadMonitor,
       optModalManager: this.modalManager,
+      optAccessibilityStatus: this.accessibilityStatus,
     });
     this.controller.init();
 
@@ -564,14 +568,14 @@ suite('Navigation', function() {
           .addButton(GamepadButtonType.R1);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
-      accessibilityStatus.enableGamepadAccessibility(this.workspace);
+      this.accessibilityStatus.enableGamepadAccessibility(this.workspace);
 
       createNavigatorGetGamepadsStub(gamepadCombination);
       this.clock.runToFrame();
 
       chai.assert.isTrue(onActivateSpy.returned(true));
-      chai.assert.isFalse(
-          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
+      chai.assert.isFalse(this.accessibilityStatus
+          .isGamepadAccessibilityEnabled(this.workspace));
     });
 
     test('Toggle Action On', function() {
@@ -580,14 +584,14 @@ suite('Navigation', function() {
           .addButton(GamepadButtonType.R1);
       const onActivateSpy = sinon.spy(
           this.gamepadShortcutRegistry, 'onActivate');
-      accessibilityStatus.disableGamepadAccessibility(this.workspace);
+      this.accessibilityStatus.disableGamepadAccessibility(this.workspace);
 
       createNavigatorGetGamepadsStub(gamepadCombination);
       this.clock.runToFrame();
 
       chai.assert.isTrue(onActivateSpy.returned(true));
-      chai.assert.isTrue(
-          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
+      chai.assert.isTrue(this.accessibilityStatus
+          .isGamepadAccessibilityEnabled(this.workspace));
     });
 
     suite('Test key press in read only mode', function() {
@@ -1192,8 +1196,8 @@ suite('Navigation', function() {
     test('Gampead accessibility mode can not be enabled', function() {
       this.navigation.removeWorkspace(this.workspace);
       this.navigation.enableGamepadAccessibility(this.workspace);
-      chai.assert.isFalse(
-          accessibilityStatus.isGamepadAccessibilityEnabled(this.workspace));
+      chai.assert.isFalse(this.accessibilityStatus
+          .isGamepadAccessibilityEnabled(this.workspace));
     });
     test('Dispose', function() {
       const numListeners = this.workspace.listeners_.length;
