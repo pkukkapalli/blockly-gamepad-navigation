@@ -11,13 +11,7 @@
 import {createPlayground, toolboxCategories} from '@blockly/dev-tools';
 import * as Blockly from 'blockly';
 
-import {
-  NavigationController,
-  GamepadShortcutRegistry,
-  GamepadMonitor,
-  Navigation,
-  DEFAULT_CONTROLS} from '../src';
-
+import {NavigationController} from '../src';
 
 let controller;
 
@@ -43,15 +37,7 @@ window.dismissIntro = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-  const gamepadShortcutRegistry = new GamepadShortcutRegistry();
-  const gamepadMonitor = new GamepadMonitor(gamepadShortcutRegistry);
-  const navigation = new Navigation();
-  controller = new NavigationController(
-      navigation,
-      gamepadShortcutRegistry,
-      gamepadMonitor,
-      DEFAULT_CONTROLS,
-      'help');
+  controller = new NavigationController({});
   controller.init();
   const defaultOptions = {
     toolbox: toolboxCategories,
