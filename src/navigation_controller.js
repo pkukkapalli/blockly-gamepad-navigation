@@ -9,8 +9,6 @@
  * navigating blockly using the gamepad.
  */
 
-import './gesture_monkey_patch';
-
 import * as Blockly from 'blockly/core';
 
 import * as Constants from './constants';
@@ -25,6 +23,8 @@ import {
   GamepadCombination} from './gamepad';
 import {HelpPopup} from './help';
 import {ModalManager} from './modal';
+import {TextInputPopup} from './text_input';
+import {gamepadFieldTextInputFactory} from './field_gamepad_text_input';
 
 const l1AndR1 = new GamepadCombination()
     .addButton(GamepadButtonType.L1)
@@ -74,6 +74,47 @@ export const DEFAULT_CONTROLS = new Map([
   [Constants.SHORTCUT_NAMES.CUT, GamepadCombination.RIGHT],
   [Constants.SHORTCUT_NAMES.DELETE, GamepadCombination.LEFT],
   [Constants.SHORTCUT_NAMES.TOGGLE_HELP, GamepadCombination.SELECT],
+  [Constants.SHORTCUT_NAMES.SELECT_LEFT_KEYBOARD_CURSOR, GamepadCombination.L1],
+  [Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_LEFT,
+    GamepadCombination.LEFT_STICK_LEFT],
+  [Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_RIGHT,
+    GamepadCombination.LEFT_STICK_RIGHT],
+  [Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_UP,
+    GamepadCombination.LEFT_STICK_UP],
+  [Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_DOWN,
+    GamepadCombination.LEFT_STICK_DOWN],
+  [Constants.SHORTCUT_NAMES.SELECT_RIGHT_KEYBOARD_CURSOR,
+    GamepadCombination.R1],
+  [Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_LEFT,
+    GamepadCombination.RIGHT_STICK_LEFT],
+  [Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_RIGHT,
+    GamepadCombination.RIGHT_STICK_RIGHT],
+  [Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_UP,
+    GamepadCombination.RIGHT_STICK_UP],
+  [Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_DOWN,
+    GamepadCombination.RIGHT_STICK_DOWN],
+]);
+
+const LEFT_CURSOR_SHORTCUTS = new Map([
+  [Constants.DIRECTION.LEFT,
+    Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_LEFT],
+  [Constants.DIRECTION.RIGHT,
+    Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_RIGHT],
+  [Constants.DIRECTION.UP,
+    Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_UP],
+  [Constants.DIRECTION.DOWN,
+    Constants.SHORTCUT_NAMES.MOVE_LEFT_KEYBOARD_CURSOR_DOWN],
+]);
+
+const RIGHT_CURSOR_SHORTCUTS = new Map([
+  [Constants.DIRECTION.LEFT,
+    Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_LEFT],
+  [Constants.DIRECTION.RIGHT,
+    Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_RIGHT],
+  [Constants.DIRECTION.UP,
+    Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_UP],
+  [Constants.DIRECTION.DOWN,
+    Constants.SHORTCUT_NAMES.MOVE_RIGHT_KEYBOARD_CURSOR_DOWN],
 ]);
 
 /**
@@ -96,6 +137,7 @@ export class NavigationController {
    * @param {!ModalManager} o.optModalManager The modal manager to initialize
    *     with.
    * @param {!HelpPopup} o.optHelpPopup A custom help popup to use.
+   * @param {!TextInputPopup} o.optTextInputPopup A custom popup for text input.
    * @param {?AccessibilityStatus} o.optAccessibilityStatus A custom
    *     accessibility status manager.
    */
@@ -105,6 +147,7 @@ export class NavigationController {
     optControls,
     optModalManager,
     optHelpPopup,
+    optTextInputPopup,
     optAccessibilityStatus}) {
     /**
      * The accessibility status manager for all workspaces.
@@ -157,6 +200,13 @@ export class NavigationController {
      * @protected
      */
     this.controls = optControls || DEFAULT_CONTROLS;
+
+    /**
+     * A popup to show a virtual keyboard.
+     * @type {!TextInputPopup}
+     * @public
+     */
+    this.textInputPopup = optTextInputPopup || new TextInputPopup();
   }
 
   /**
@@ -164,11 +214,16 @@ export class NavigationController {
    * @public
    */
   init() {
+    this.modalManager.init();
+    this.helpPopup.init(this.modalManager, this.controls);
+    this.textInputPopup.init(this.modalManager);
+    const textInputClass = gamepadFieldTextInputFactory(this.navigation,
+        this.textInputPopup);
+    Blockly.fieldRegistry.unregister('field_input');
+    Blockly.fieldRegistry.register('field_input', textInputClass);
     this.addShortcutHandlers();
     this.registerDefaults();
     this.gamepadMonitor.init();
-    this.modalManager.init();
-    this.helpPopup.init(this.modalManager, this.controls);
   }
 
   /**
@@ -359,6 +414,18 @@ export class NavigationController {
   }
 
   /**
+   * Check whether we are in one of the given states.
+   * @param {Blockly.WorkspaceSvg} workspace The workspace whose state to check.
+   * @param  {...Constants.STATE} states The valid states.
+   * @return {boolean} True if the current state is one of {@code states},
+   *    false otherwise.
+   * @private
+   */
+  isCurrentStateOneOf_(workspace, ...states) {
+    return new Set(states).has(this.navigation.getState(workspace));
+  }
+
+  /**
    * Gampead shortcut to go to the previous location when in gamepad
    * navigation mode.
    * @protected
@@ -369,7 +436,12 @@ export class NavigationController {
       name: Constants.SHORTCUT_NAMES.PREVIOUS,
       preconditionFn: (workspace) => {
         return this.accessibilityStatus
-            .isGamepadAccessibilityEnabled(workspace);
+            .isGamepadAccessibilityEnabled(workspace) &&
+            this.isCurrentStateOneOf_(
+                workspace,
+                Constants.STATE.WORKSPACE,
+                Constants.STATE.FLYOUT,
+                Constants.STATE.TOOLBOX);
       },
       callback: (workspace, combination, shortcut) => {
         const flyout = workspace.getFlyout();
@@ -441,7 +513,12 @@ export class NavigationController {
       name: Constants.SHORTCUT_NAMES.OUT,
       preconditionFn: (workspace) => {
         return this.accessibilityStatus
-            .isGamepadAccessibilityEnabled(workspace);
+            .isGamepadAccessibilityEnabled(workspace) &&
+            this.isCurrentStateOneOf_(
+                workspace,
+                Constants.STATE.WORKSPACE,
+                Constants.STATE.FLYOUT,
+                Constants.STATE.TOOLBOX);
       },
       callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -483,7 +560,12 @@ export class NavigationController {
       name: Constants.SHORTCUT_NAMES.NEXT,
       preconditionFn: (workspace) => {
         return this.accessibilityStatus
-            .isGamepadAccessibilityEnabled(workspace);
+            .isGamepadAccessibilityEnabled(workspace) &&
+            this.isCurrentStateOneOf_(
+                workspace,
+                Constants.STATE.WORKSPACE,
+                Constants.STATE.FLYOUT,
+                Constants.STATE.TOOLBOX);
       },
       callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -530,7 +612,11 @@ export class NavigationController {
       name: Constants.SHORTCUT_NAMES.IN,
       preconditionFn: (workspace) => {
         return this.accessibilityStatus
-            .isGamepadAccessibilityEnabled(workspace);
+            .isGamepadAccessibilityEnabled(workspace) &&
+            this.isCurrentStateOneOf_(
+                workspace,
+                Constants.STATE.WORKSPACE,
+                Constants.STATE.TOOLBOX);
       },
       callback: (workspace, combination, shortcut) => {
         const toolbox = workspace.getToolbox();
@@ -574,7 +660,8 @@ export class NavigationController {
       preconditionFn: (workspace) => {
         return this.accessibilityStatus
             .isGamepadAccessibilityEnabled(workspace) &&
-            !workspace.options.readOnly;
+            !workspace.options.readOnly &&
+            this.isCurrentStateOneOf_(workspace, Constants.STATE.WORKSPACE);
       },
       callback: (workspace) => {
         switch (this.navigation.getState(workspace)) {
@@ -714,6 +801,10 @@ export class NavigationController {
             return true;
           case Constants.STATE.HELP:
             this.helpPopup.hide();
+            this.navigation.focusWorkspace(workspace);
+            return true;
+          case Constants.STATE.TEXT_INPUT:
+            this.textInputPopup.hide();
             this.navigation.focusWorkspace(workspace);
             return true;
           default:
@@ -1079,6 +1170,118 @@ export class NavigationController {
   }
 
   /**
+   * Registers shortcut to select the character highlighted by the left cursor.
+   * @protected
+   */
+  registerSelectLeftKeyboardCursor() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SELECT_LEFT_KEYBOARD_CURSOR,
+
+      preconditionFn: (workspace) => {
+        return this.accessibilityStatus
+            .isGamepadAccessibilityEnabled(workspace) &&
+          this.navigation.getState(workspace) === Constants.STATE.TEXT_INPUT;
+      },
+
+      callback: (workspace) => {
+        this.textInputPopup.selectElementOnLeftCursor();
+        return true;
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name), shortcut.name,
+        /* optAllowCollision= */ true);
+  }
+
+  /**
+   * Registers shortcut to move the left cursor.
+   * @param {Constants.DIRECTION} direction The direction to move the cursor.
+   * @protected
+   */
+  registerMoveLeftKeyboardCursor(direction) {
+    const name = LEFT_CURSOR_SHORTCUTS.get(direction);
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name,
+
+      preconditionFn: (workspace) => {
+        return this.accessibilityStatus
+            .isGamepadAccessibilityEnabled(workspace) &&
+          this.navigation.getState(workspace) === Constants.STATE.TEXT_INPUT;
+      },
+
+      callback: (workspace) => {
+        this.textInputPopup.moveLeftCursor(direction);
+        return true;
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name), shortcut.name,
+        /* optAllowCollision= */ true);
+  }
+
+  /**
+   * Registers shortcut to select the character highlighted by the right
+   * cursor.
+   * @protected
+   */
+  registerSelectRightKeyboardCursor() {
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name: Constants.SHORTCUT_NAMES.SELECT_RIGHT_KEYBOARD_CURSOR,
+
+      preconditionFn: (workspace) => {
+        return this.accessibilityStatus
+            .isGamepadAccessibilityEnabled(workspace) &&
+          this.navigation.getState(workspace) === Constants.STATE.TEXT_INPUT;
+      },
+
+      callback: (workspace) => {
+        this.textInputPopup.selectElementOnRightCursor();
+        return true;
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name), shortcut.name,
+        /* optAllowCollision= */ true);
+  }
+
+  /**
+   * Registers shortcut to move the right cursor.
+   * @param {Constants.DIRECTION} direction The direction to move the cursor.
+   */
+  registerMoveRightKeyboardCursor(direction) {
+    const name = RIGHT_CURSOR_SHORTCUTS.get(direction);
+    /** @type {!GamepadShortcut} */
+    const shortcut = {
+      name,
+
+      preconditionFn: (workspace) => {
+        return this.accessibilityStatus
+            .isGamepadAccessibilityEnabled(workspace) &&
+          this.navigation.getState(workspace) === Constants.STATE.TEXT_INPUT;
+      },
+
+      callback: (workspace) => {
+        this.textInputPopup.moveRightCursor(direction);
+        return true;
+      },
+    };
+
+    this.gamepadShortcutRegistry.register(shortcut);
+    this.gamepadShortcutRegistry.addCombinationMapping(
+        this.controls.get(shortcut.name), shortcut.name,
+        /* optAllowCollision= */ true);
+  }
+
+  /**
    * Registers all default gamepad shortcut items for gamepad navigation. This
    * should be called once per instance of GamepadShortcutRegistry.
    * @protected
@@ -1112,6 +1315,18 @@ export class NavigationController {
     this.registerDelete();
 
     this.registerOpenHelp();
+
+    this.registerSelectLeftKeyboardCursor();
+    this.registerMoveLeftKeyboardCursor(Constants.DIRECTION.LEFT);
+    this.registerMoveLeftKeyboardCursor(Constants.DIRECTION.RIGHT);
+    this.registerMoveLeftKeyboardCursor(Constants.DIRECTION.UP);
+    this.registerMoveLeftKeyboardCursor(Constants.DIRECTION.DOWN);
+
+    this.registerSelectRightKeyboardCursor();
+    this.registerMoveRightKeyboardCursor(Constants.DIRECTION.LEFT);
+    this.registerMoveRightKeyboardCursor(Constants.DIRECTION.RIGHT);
+    this.registerMoveRightKeyboardCursor(Constants.DIRECTION.UP);
+    this.registerMoveRightKeyboardCursor(Constants.DIRECTION.DOWN);
   }
 
   /**
@@ -1127,5 +1342,7 @@ export class NavigationController {
     this.navigation.dispose();
     this.gamepadMonitor.dispose();
     this.modalManager.dispose();
+    Blockly.fieldRegistry.unregister('field_input');
+    Blockly.fieldRegistry.register('field_input', Blockly.FieldTextInput);
   }
 }

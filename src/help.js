@@ -146,6 +146,24 @@ export class HelpPopup {
         </li>
       </ul>
 
+      <h1>Text Input</h1>
+      <ul>
+        <li>
+          <b>Move the left cursor:</b> Left stick
+        </li>
+        <li>
+          <b>Move the right cursor:</b> Right stick
+        </li>
+        <li>
+          ${this.helpTextForShortcut_(
+      Constants.SHORTCUT_NAMES.SELECT_LEFT_KEYBOARD_CURSOR)}
+        </li>
+        <li>
+          ${this.helpTextForShortcut_(
+      Constants.SHORTCUT_NAMES.SELECT_RIGHT_KEYBOARD_CURSOR)}
+        </li>
+      </ul>
+
       <h1>Other</h1>
       <ul>
         <li>${this.helpTextForShortcut_(Constants.SHORTCUT_NAMES.TOOLBOX)}</li>

@@ -316,3 +316,8 @@ GamepadCombination.RIGHT = GamepadCombination.fromSingleButton(
 
 GamepadCombination.SELECT = GamepadCombination.fromSingleButton(
     GamepadButtonType.SELECT);
+
+GamepadCombination.L1 = GamepadCombination.fromSingleButton(
+    GamepadButtonType.L1);
+GamepadCombination.R1 = GamepadCombination.fromSingleButton(
+    GamepadButtonType.R1);
